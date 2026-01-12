@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import klangwunderIcon from '@/assets/klangwunder-icon.png';
 
 const navItems = [
   { href: '#hero', label: 'Start' },
@@ -36,10 +37,18 @@ export function Navigation() {
             <motion.a
               href="#hero"
               onClick={(e) => { e.preventDefault(); scrollToSection('#hero'); }}
-              className="font-display text-3xl text-gradient cursor-pointer"
+              className="flex items-center gap-3 cursor-pointer"
               whileHover={{ scale: 1.05 }}
             >
-              Klangwunder
+              <img 
+                src={klangwunderIcon} 
+                alt="Klangwunder" 
+                className="w-10 h-10 rounded-full"
+                style={{
+                  boxShadow: '0 0 15px hsl(var(--primary)/0.4)'
+                }}
+              />
+              <span className="font-display text-2xl text-gradient">Klangwunder</span>
             </motion.a>
 
             <div className="flex items-center gap-1 glass rounded-full px-2 py-1">
@@ -81,6 +90,14 @@ export function Navigation() {
             className="fixed inset-0 z-40 glass-strong md:hidden"
           >
             <div className="flex flex-col items-center justify-center h-full gap-6">
+              <img 
+                src={klangwunderIcon} 
+                alt="Klangwunder" 
+                className="w-16 h-16 rounded-full mb-4"
+                style={{
+                  boxShadow: '0 0 20px hsl(var(--primary)/0.5)'
+                }}
+              />
               <motion.span
                 className="font-display text-4xl text-gradient mb-8"
                 initial={{ opacity: 0, y: 20 }}
