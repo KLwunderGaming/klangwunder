@@ -1,0 +1,82 @@
+{
+  "tracks": [
+    {
+      "id": "1",
+      "title": "Nachtklänge",
+      "artist": "Klangwunder",
+      "album": "Erste Wellen",
+      "duration": 245,
+      "cover": "./assets/covers/cover1.jpg",
+      "audio": "./assets/audio/track1.mp3",
+      "genre": "Electronic",
+      "bpm": 120
+    },
+    {
+      "id": "2",
+      "title": "Sternenstaub",
+      "artist": "Klangwunder",
+      "album": "Erste Wellen",
+      "duration": 198,
+      "cover": "./assets/covers/cover2.jpg",
+      "audio": "./assets/audio/track2.mp3",
+      "genre": "Ambient",
+      "bpm": 90
+    },
+    {
+      "id": "3",
+      "title": "Purpurtraum",
+      "artist": "Klangwunder",
+      "album": "Amethyst Sessions",
+      "duration": 276,
+      "cover": "./assets/covers/cover3.jpg",
+      "audio": "./assets/audio/track3.mp3",
+      "genre": "Downtempo",
+      "bpm": 100
+    },
+    {
+      "id": "4",
+      "title": "Mondschein Melodie",
+      "artist": "Klangwunder",
+      "album": "Amethyst Sessions",
+      "duration": 312,
+      "cover": "./assets/covers/cover4.jpg",
+      "audio": "./assets/audio/track4.mp3",
+      "genre": "Chillout",
+      "bpm": 85
+    },
+    {
+      "id": "5",
+      "title": "Kristallwellen",
+      "artist": "Klangwunder",
+      "album": "Tiefe Frequenzen",
+      "duration": 234,
+      "cover": "./assets/covers/cover5.jpg",
+      "audio": "./assets/audio/track5.mp3",
+      "genre": "Progressive",
+      "bpm": 128
+    }
+  ],
+  "playlists": [
+    {
+      "id": "pl1",
+      "name": "Entspannung Pur",
+      "description": "Sanfte Klänge für ruhige Momente",
+      "cover": "./assets/playlists/playlist1.jpg",
+      "trackIds": ["2", "4"]
+    },
+    {
+      "id": "pl2",
+      "name": "Nachtfahrt",
+      "description": "Beats für nächtliche Abenteuer",
+      "cover": "./assets/playlists/playlist2.jpg",
+      "trackIds": ["1", "3", "5"]
+    },
+    {
+      "id": "pl3",
+      "name": "Amethyst Mix",
+      "description": "Die besten Tracks der Amethyst Sessions",
+      "cover": "./assets/playlists/playlist3.jpg",
+      "trackIds": ["3", "4"]
+    }
+  ]
+}
