@@ -2,25 +2,29 @@ export interface Track {
   id: string;
   title: string;
   artist: string;
-  album: string;
+  album: string | null;
   duration: number;
-  cover: string;
-  audio: string;
-  genre: string;
-  bpm: number;
+  cover_url: string | null;
+  audio_url: string | null;
+  genre: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Playlist {
   id: string;
   name: string;
-  description: string;
-  cover: string;
-  trackIds: string[];
+  description: string | null;
+  cover_url: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface TracksData {
-  tracks: Track[];
-  playlists: Playlist[];
+export interface PlaylistTrack {
+  id: string;
+  playlist_id: string;
+  track_id: string;
+  position: number;
 }
 
 export interface EQBand {

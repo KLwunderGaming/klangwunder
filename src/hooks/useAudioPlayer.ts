@@ -219,13 +219,15 @@ export function useAudioPlayer() {
       });
     }
 
-    // Resolve relative path
-    const basePath = import.meta.env.BASE_URL || './';
-    const audioPath = track.audio.startsWith('./') 
-      ? `${basePath}${track.audio.slice(2)}`
-      : track.audio;
+    // Get audio URL - support both database tracks (audio_url) and local files
+    const audioUrl = track.audio_url;
+    
+    if (!audioUrl) {
+      console.error('No audio URL for track:', track.title);
+      return;
+    }
 
-    audioRef.current.src = audioPath;
+    audioRef.current.src = audioUrl;
     setCurrentTrack(track);
     
     initAudioContext();
