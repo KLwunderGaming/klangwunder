@@ -30,6 +30,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleNavigate = (tab: string) => {
+    setActiveTab(tab as Tab);
+  };
+
   const tabs = [
     { id: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'content' as Tab, label: 'Seiten & Inhalte', icon: FileText },
@@ -159,7 +163,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            {activeTab === 'dashboard' && <DashboardOverview />}
+            {activeTab === 'dashboard' && <DashboardOverview onNavigate={handleNavigate} />}
             {activeTab === 'content' && <ContentManager />}
             {activeTab === 'tracks' && <TracksManager />}
             {activeTab === 'playlists' && <PlaylistsManager />}

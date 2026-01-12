@@ -62,18 +62,24 @@ export function ContentManager() {
 
   const fetchSections = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('content_sections')
-      .select('*')
-      .order('position') as { data: ContentSection[] | null; error: any };
+    try {
+      const { data, error } = await supabase
+        .from('content_sections')
+        .select('*')
+        .order('position');
 
-    if (error) {
-      console.error('Error fetching sections:', error);
+      if (error) {
+        console.error('Error fetching sections:', error);
+        setSections([]);
+      } else {
+        setSections((data as ContentSection[]) || []);
+      }
+    } catch (err) {
+      console.error('Error:', err);
       setSections([]);
-    } else {
-      setSections(data || []);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const toggleExpanded = (id: string) => {
@@ -128,8 +134,8 @@ export function ContentManager() {
 
       if (editingSection.id) {
         // Update existing
-        const { error } = await (supabase
-          .from('content_sections') as any)
+        const { error } = await supabase
+          .from('content_sections')
           .update(sectionData)
           .eq('id', editingSection.id);
 
@@ -137,8 +143,8 @@ export function ContentManager() {
         toast.success('Sektion aktualisiert');
       } else {
         // Create new
-        const { error } = await (supabase
-          .from('content_sections') as any)
+        const { error } = await supabase
+          .from('content_sections')
           .insert(sectionData);
 
         if (error) throw error;
@@ -148,9 +154,9 @@ export function ContentManager() {
       setIsDialogOpen(false);
       setEditingSection(null);
       fetchSections();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving section:', err);
-      toast.error('Fehler beim Speichern');
+      toast.error(err.message || 'Fehler beim Speichern');
     } finally {
       setIsSaving(false);
     }
@@ -160,30 +166,32 @@ export function ContentManager() {
     if (!confirm('Bist du sicher, dass du diese Sektion löschen möchtest?')) return;
 
     try {
-      const { error } = await (supabase
-        .from('content_sections') as any)
+      const { error } = await supabase
+        .from('content_sections')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
       toast.success('Sektion gelöscht');
       fetchSections();
-    } catch (err) {
-      toast.error('Fehler beim Löschen');
+    } catch (err: any) {
+      console.error('Error deleting section:', err);
+      toast.error(err.message || 'Fehler beim Löschen');
     }
   };
 
   const handleToggleVisibility = async (section: ContentSection) => {
     try {
-      const { error } = await (supabase
-        .from('content_sections') as any)
+      const { error } = await supabase
+        .from('content_sections')
         .update({ is_visible: !section.is_visible })
         .eq('id', section.id);
 
       if (error) throw error;
       fetchSections();
-    } catch (err) {
-      toast.error('Fehler beim Aktualisieren');
+    } catch (err: any) {
+      console.error('Error updating visibility:', err);
+      toast.error(err.message || 'Fehler beim Aktualisieren');
     }
   };
 
