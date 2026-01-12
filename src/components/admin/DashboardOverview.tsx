@@ -5,10 +5,9 @@ import {
   Music, 
   ListMusic, 
   FileText, 
-  Users,
-  TrendingUp,
   Eye,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 
 interface Stats {
@@ -18,7 +17,11 @@ interface Stats {
   visibleSections: number;
 }
 
-export function DashboardOverview() {
+interface DashboardOverviewProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function DashboardOverview({ onNavigate }: DashboardOverviewProps) {
   const [stats, setStats] = useState<Stats>({
     totalTracks: 0,
     totalPlaylists: 0,
@@ -36,7 +39,7 @@ export function DashboardOverview() {
       const [tracksResult, playlistsResult, sectionsResult] = await Promise.all([
         supabase.from('tracks').select('id', { count: 'exact', head: true }),
         supabase.from('playlists').select('id', { count: 'exact', head: true }),
-        (supabase.from('content_sections') as any).select('id, is_visible')
+        supabase.from('content_sections').select('id, is_visible')
       ]);
 
       const sections = sectionsResult.data || [];
@@ -84,6 +87,20 @@ export function DashboardOverview() {
       description: 'Aktive Sektionen'
     },
   ];
+
+  const handleQuickAction = (tab: string) => {
+    if (onNavigate) {
+      onNavigate(tab);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -134,7 +151,7 @@ export function DashboardOverview() {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: index * 0.1 + 0.2, type: 'spring' }}
                 >
-                  {isLoading ? '-' : stat.value}
+                  {stat.value}
                 </motion.p>
                 <p className="text-xs text-muted-foreground mt-2">{stat.description}</p>
               </div>
@@ -159,7 +176,8 @@ export function DashboardOverview() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <motion.button
-            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all"
+            onClick={() => handleQuickAction('tracks')}
+            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all cursor-pointer"
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -171,7 +189,8 @@ export function DashboardOverview() {
           </motion.button>
           
           <motion.button
-            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all"
+            onClick={() => handleQuickAction('content')}
+            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all cursor-pointer"
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -183,7 +202,8 @@ export function DashboardOverview() {
           </motion.button>
           
           <motion.button
-            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all"
+            onClick={() => handleQuickAction('playlists')}
+            className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all cursor-pointer"
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
