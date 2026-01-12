@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_sections: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_visible: boolean | null
+          link_url: string | null
+          position: number | null
+          section_key: string
+          section_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          link_url?: string | null
+          position?: number | null
+          section_key: string
+          section_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          link_url?: string | null
+          position?: number | null
+          section_key?: string
+          section_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       playlist_tracks: {
         Row: {
           created_at: string

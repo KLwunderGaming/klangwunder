@@ -65,11 +65,10 @@ export function ContentManager() {
     const { data, error } = await supabase
       .from('content_sections')
       .select('*')
-      .order('position');
+      .order('position') as { data: ContentSection[] | null; error: any };
 
     if (error) {
       console.error('Error fetching sections:', error);
-      // If table doesn't exist, show empty state
       setSections([]);
     } else {
       setSections(data || []);
@@ -129,8 +128,8 @@ export function ContentManager() {
 
       if (editingSection.id) {
         // Update existing
-        const { error } = await supabase
-          .from('content_sections')
+        const { error } = await (supabase
+          .from('content_sections') as any)
           .update(sectionData)
           .eq('id', editingSection.id);
 
@@ -138,8 +137,8 @@ export function ContentManager() {
         toast.success('Sektion aktualisiert');
       } else {
         // Create new
-        const { error } = await supabase
-          .from('content_sections')
+        const { error } = await (supabase
+          .from('content_sections') as any)
           .insert(sectionData);
 
         if (error) throw error;
@@ -161,8 +160,8 @@ export function ContentManager() {
     if (!confirm('Bist du sicher, dass du diese Sektion löschen möchtest?')) return;
 
     try {
-      const { error } = await supabase
-        .from('content_sections')
+      const { error } = await (supabase
+        .from('content_sections') as any)
         .delete()
         .eq('id', id);
 
@@ -176,8 +175,8 @@ export function ContentManager() {
 
   const handleToggleVisibility = async (section: ContentSection) => {
     try {
-      const { error } = await supabase
-        .from('content_sections')
+      const { error } = await (supabase
+        .from('content_sections') as any)
         .update({ is_visible: !section.is_visible })
         .eq('id', section.id);
 
