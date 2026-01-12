@@ -23,6 +23,14 @@ const defaultSettings = [
   { key: 'about_text', label: 'Über mich Text', placeholder: 'Erzähle etwas über dich...', type: 'textarea', group: 'about' },
   { key: 'about_image', label: 'Profilbild', placeholder: '', type: 'image', group: 'about' },
   
+  // Statistiken
+  { key: 'stat_tracks_value', label: 'Tracks Anzahl', placeholder: '50+', type: 'text', group: 'stats' },
+  { key: 'stat_tracks_label', label: 'Tracks Beschreibung', placeholder: 'Tracks', type: 'text', group: 'stats' },
+  { key: 'stat_streams_value', label: 'Streams Anzahl', placeholder: '10K+', type: 'text', group: 'stats' },
+  { key: 'stat_streams_label', label: 'Streams Beschreibung', placeholder: 'Streams', type: 'text', group: 'stats' },
+  { key: 'stat_years_value', label: 'Jahre Anzahl', placeholder: '5', type: 'text', group: 'stats' },
+  { key: 'stat_years_label', label: 'Jahre Beschreibung', placeholder: 'Jahre', type: 'text', group: 'stats' },
+  
   // Kontakt
   { key: 'contact_email', label: 'Kontakt E-Mail', placeholder: 'kontakt@klangwunder.de', type: 'email', group: 'contact' },
   { key: 'booking_email', label: 'Booking E-Mail', placeholder: 'booking@klangwunder.de', type: 'email', group: 'contact' },
@@ -126,6 +134,7 @@ export function SettingsManager() {
     { key: 'general', label: 'Allgemein', icon: '⚙️' },
     { key: 'hero', label: 'Hero Section', icon: '🎬' },
     { key: 'about', label: 'Über mich', icon: '👤' },
+    { key: 'stats', label: 'Statistiken', icon: '📊' },
     { key: 'contact', label: 'Kontakt', icon: '📧' },
     { key: 'social', label: 'Social Media', icon: '🔗' },
   ];

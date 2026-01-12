@@ -140,12 +140,12 @@ export function AboutSection() {
 
             <div className="mt-8 grid grid-cols-3 gap-4">
               {[
-                { icon: Music, label: '50+', desc: 'Tracks' },
-                { icon: Headphones, label: '10K+', desc: 'Streams' },
-                { icon: Sparkles, label: '5', desc: 'Jahre' },
+                { icon: Music, label: settings.stat_tracks_value || '50+', desc: settings.stat_tracks_label || 'Tracks' },
+                { icon: Headphones, label: settings.stat_streams_value || '10K+', desc: settings.stat_streams_label || 'Streams' },
+                { icon: Sparkles, label: settings.stat_years_value || '5', desc: settings.stat_years_label || 'Jahre' },
               ].map((stat, index) => (
                 <motion.div
-                  key={stat.label}
+                  key={stat.desc}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
