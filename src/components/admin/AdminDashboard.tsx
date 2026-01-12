@@ -8,25 +8,30 @@ import {
   LogOut, 
   Home,
   Menu,
-  X
+  X,
+  FileText,
+  LayoutDashboard
 } from 'lucide-react';
 import klangwunderIcon from '@/assets/klangwunder-icon.png';
 import { TracksManager } from './TracksManager';
 import { PlaylistsManager } from './PlaylistsManager';
 import { SettingsManager } from './SettingsManager';
+import { ContentManager } from './ContentManager';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = 'tracks' | 'playlists' | 'settings';
+type Tab = 'dashboard' | 'content' | 'tracks' | 'playlists' | 'settings';
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('tracks');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   const tabs = [
+    { id: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'content' as Tab, label: 'Seiten & Inhalte', icon: FileText },
     { id: 'tracks' as Tab, label: 'Tracks', icon: Music },
     { id: 'playlists' as Tab, label: 'Playlists', icon: ListMusic },
     { id: 'settings' as Tab, label: 'Einstellungen', icon: Settings },
@@ -138,6 +143,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               {tabs.find(t => t.id === activeTab)?.label}
             </h1>
             <p className="text-muted-foreground font-body">
+              {activeTab === 'dashboard' && 'Übersicht über deine Webseite'}
+              {activeTab === 'content' && 'Bearbeite Seiten und Texte'}
               {activeTab === 'tracks' && 'Verwalte deine Musiksammlung'}
               {activeTab === 'playlists' && 'Erstelle und bearbeite Playlists'}
               {activeTab === 'settings' && 'Passe die Webseite an'}
@@ -151,6 +158,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
+            {activeTab === 'dashboard' && <DashboardOverview />}
+            {activeTab === 'content' && <ContentManager />}
             {activeTab === 'tracks' && <TracksManager />}
             {activeTab === 'playlists' && <PlaylistsManager />}
             {activeTab === 'settings' && <SettingsManager />}
