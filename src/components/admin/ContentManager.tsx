@@ -11,11 +11,11 @@ import {
   Type,
   Image,
   Link,
-  GripVertical,
   Eye,
   EyeOff,
   ChevronDown,
-  ChevronUp
+  Upload,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -55,6 +55,7 @@ export function ContentManager() {
   const [editingSection, setEditingSection] = useState<ContentSection | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchSections();
@@ -92,6 +93,35 @@ export function ContentManager() {
       }
       return next;
     });
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file || !editingSection) return;
+    
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `content-${Date.now()}.${fileExt}`;
+      const filePath = `content/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('covers')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('covers')
+        .getPublicUrl(filePath);
+
+      setEditingSection({ ...editingSection, image_url: publicUrl });
+      toast.success('Bild hochgeladen');
+    } catch (err: any) {
+      console.error('Error uploading image:', err);
+      toast.error('Fehler beim Hochladen');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCreateSection = () => {
@@ -133,7 +163,6 @@ export function ContentManager() {
       };
 
       if (editingSection.id) {
-        // Update existing
         const { error } = await supabase
           .from('content_sections')
           .update(sectionData)
@@ -142,7 +171,6 @@ export function ContentManager() {
         if (error) throw error;
         toast.success('Sektion aktualisiert');
       } else {
-        // Create new
         const { error } = await supabase
           .from('content_sections')
           .insert(sectionData);
@@ -449,15 +477,53 @@ export function ContentManager() {
                 />
               </div>
 
-              {/* Bild URL */}
+              {/* Bild Upload */}
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Bild URL (optional)</label>
+                <label className="text-sm text-muted-foreground mb-2 block">Bild</label>
+                {editingSection.image_url ? (
+                  <div className="relative inline-block">
+                    <img 
+                      src={editingSection.image_url} 
+                      alt="" 
+                      className="w-full max-w-md h-48 object-cover rounded-xl"
+                    />
+                    <button
+                      onClick={() => setEditingSection({ ...editingSection, image_url: null })}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-destructive/80 hover:bg-destructive text-white"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-40 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/50 cursor-pointer transition-colors bg-background/30">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                    {isUploading ? (
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-primary mb-2" />
+                        <span className="text-sm text-muted-foreground">Bild hochladen</span>
+                        <span className="text-xs text-muted-foreground mt-1">oder per URL unten eingeben</span>
+                      </>
+                    )}
+                  </label>
+                )}
+                
+                {/* URL alternativ */}
                 <input
                   type="url"
                   value={editingSection.image_url || ''}
                   onChange={(e) => setEditingSection({ ...editingSection, image_url: e.target.value || null })}
-                  placeholder="https://..."
-                  className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none"
+                  placeholder="Oder Bild-URL einfügen..."
+                  className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none mt-3"
                 />
               </div>
 
@@ -475,29 +541,28 @@ export function ContentManager() {
 
               {/* Sichtbarkeit */}
               <div className="flex items-center gap-3">
-                <motion.button
+                <button
                   onClick={() => setEditingSection({ ...editingSection, is_visible: !editingSection.is_visible })}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
                     editingSection.is_visible ? 'bg-primary' : 'bg-muted'
                   }`}
-                  whileTap={{ scale: 0.95 }}
                 >
-                  <motion.div
-                    className="w-5 h-5 rounded-full bg-white absolute top-0.5"
-                    animate={{ left: editingSection.is_visible ? 'calc(100% - 22px)' : '2px' }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  <div
+                    className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                      editingSection.is_visible ? 'left-7' : 'left-1'
+                    }`}
                   />
-                </motion.button>
-                <span className="text-sm">
+                </button>
+                <span className="text-sm text-muted-foreground">
                   {editingSection.is_visible ? 'Sichtbar' : 'Versteckt'}
                 </span>
               </div>
 
-              {/* Buttons */}
+              {/* Actions */}
               <div className="flex gap-3 pt-4">
                 <motion.button
                   onClick={() => setIsDialogOpen(false)}
-                  className="flex-1 px-6 py-3 rounded-xl btn-ghost"
+                  className="flex-1 px-4 py-3 rounded-xl btn-ghost"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -505,8 +570,8 @@ export function ContentManager() {
                 </motion.button>
                 <motion.button
                   onClick={handleSaveSection}
-                  disabled={!editingSection.title || isSaving}
-                  className="flex-1 px-6 py-3 rounded-xl btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={isSaving || !editingSection.title}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl btn-primary disabled:opacity-50"
                   whileHover={{ scale: isSaving ? 1 : 1.02 }}
                   whileTap={{ scale: isSaving ? 1 : 0.98 }}
                 >

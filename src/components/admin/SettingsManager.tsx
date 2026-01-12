@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import { Save, Loader2, RefreshCw } from 'lucide-react';
+import { Save, Loader2, RefreshCw, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Setting {
@@ -17,10 +17,11 @@ const defaultSettings = [
   
   // Hero Section
   { key: 'hero_title', label: 'Hero Titel', placeholder: 'Klangwunder', type: 'text', group: 'hero' },
-  { key: 'hero_subtitle', label: 'Hero Untertitel', placeholder: 'Klänge, die Wunder wirken', type: 'text', group: 'hero' },
+  { key: 'hero_subtitle', label: 'Hero Untertitel', placeholder: 'Klänge, die Wunder wirken', type: 'textarea', group: 'hero' },
   
   // About
   { key: 'about_text', label: 'Über mich Text', placeholder: 'Erzähle etwas über dich...', type: 'textarea', group: 'about' },
+  { key: 'about_image', label: 'Profilbild', placeholder: '', type: 'image', group: 'about' },
   
   // Kontakt
   { key: 'contact_email', label: 'Kontakt E-Mail', placeholder: 'kontakt@klangwunder.de', type: 'email', group: 'contact' },
@@ -39,6 +40,7 @@ export function SettingsManager() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -55,6 +57,33 @@ export function SettingsManager() {
     });
     setSettings(settingsMap);
     setIsLoading(false);
+  };
+
+  const handleImageUpload = async (key: string, file: File) => {
+    setUploadingKey(key);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `settings-${key}-${Date.now()}.${fileExt}`;
+      const filePath = `settings/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('covers')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('covers')
+        .getPublicUrl(filePath);
+
+      updateSetting(key, publicUrl);
+      toast.success('Bild hochgeladen');
+    } catch (err: any) {
+      console.error('Error uploading image:', err);
+      toast.error('Fehler beim Hochladen');
+    } finally {
+      setUploadingKey(null);
+    }
   };
 
   const handleSave = async () => {
@@ -124,12 +153,51 @@ export function SettingsManager() {
               {groupSettings.map((setting) => (
                 <div 
                   key={setting.key}
-                  className={setting.type === 'textarea' ? 'sm:col-span-2' : ''}
+                  className={setting.type === 'textarea' || setting.type === 'image' ? 'sm:col-span-2' : ''}
                 >
                   <label className="text-sm text-muted-foreground mb-2 block">
                     {setting.label}
                   </label>
-                  {setting.type === 'textarea' ? (
+                  
+                  {setting.type === 'image' ? (
+                    <div className="space-y-3">
+                      {settings[setting.key] ? (
+                        <div className="relative inline-block">
+                          <img 
+                            src={settings[setting.key]} 
+                            alt={setting.label} 
+                            className="w-40 h-40 object-cover rounded-xl"
+                          />
+                          <button
+                            onClick={() => updateSetting(setting.key, '')}
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-40 h-40 rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/50 cursor-pointer transition-colors bg-background/30">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(setting.key, file);
+                            }}
+                            className="hidden"
+                          />
+                          {uploadingKey === setting.key ? (
+                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6 text-primary mb-2" />
+                              <span className="text-xs text-muted-foreground">Hochladen</span>
+                            </>
+                          )}
+                        </label>
+                      )}
+                    </div>
+                  ) : setting.type === 'textarea' ? (
                     <textarea
                       value={settings[setting.key] || ''}
                       onChange={(e) => updateSetting(setting.key, e.target.value)}
