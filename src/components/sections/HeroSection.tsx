@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, Play } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
+import heroVideo from '@/assets/hero-video.mp4';
 
 export function HeroSection() {
   const { playTrack, addToQueue, setQueue } = useAudio();
@@ -23,6 +24,20 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 z-0">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px]" />
+      </div>
+
       <div className="section-container relative z-10 text-center py-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -88,7 +103,7 @@ export function HeroSection() {
       </div>
 
       {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none z-[5]" />
     </section>
   );
 }
