@@ -1,37 +1,58 @@
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Clock, ExternalLink, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-const events = [
-  {
-    id: 1,
-    title: 'Amethyst Night',
-    date: '15. Februar 2026',
-    time: '22:00 Uhr',
-    location: 'Club Violet, Berlin',
-    description: 'Eine Nacht voller elektronischer Klänge und visueller Kunst.',
-    status: 'upcoming',
-  },
-  {
-    id: 2,
-    title: 'Klangwunder Live',
-    date: '28. März 2026',
-    time: '20:00 Uhr',
-    location: 'Musikhalle, München',
-    description: 'Exklusives Live-Set mit neuen, unveröffentlichten Tracks.',
-    status: 'upcoming',
-  },
-  {
-    id: 3,
-    title: 'Summer Vibes Festival',
-    date: '12. Juli 2026',
-    time: '16:00 Uhr',
-    location: 'Open Air, Hamburg',
-    description: 'Teil des großen Sommerfestivals mit internationalen Acts.',
-    status: 'upcoming',
-  },
-];
+interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  event_date: string;
+  event_time: string | null;
+  location: string | null;
+  ticket_url: string | null;
+}
 
 export function EventsSection() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_visible', true)
+      .gte('event_date', new Date().toISOString().split('T')[0]) // Only future events
+      .order('event_date', { ascending: true });
+
+    if (!error && data) {
+      setEvents(data);
+    }
+    setIsLoading(false);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      day: date.getDate().toString().padStart(2, '0'),
+      month: date.toLocaleString('de-DE', { month: 'short' }).toUpperCase(),
+      full: date.toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      })
+    };
+  };
+
+  // Don't render section if no events and not loading
+  if (!isLoading && events.length === 0) {
+    return null;
+  }
+
   return (
     <section id="events" className="py-24 relative">
       <div className="section-container">
@@ -50,59 +71,84 @@ export function EventsSection() {
           </p>
         </motion.div>
 
-        <div className="space-y-6">
-          {events.map((event, index) => (
-            <motion.div
-              key={event.id}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="glass rounded-2xl p-6 card-hover group"
-            >
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                {/* Date badge */}
-                <div className="flex-shrink-0 w-20 h-20 rounded-xl bg-gradient-to-br from-primary to-accent flex flex-col items-center justify-center text-accent-foreground">
-                  <span className="text-2xl font-bold">{event.date.split('.')[0]}</span>
-                  <span className="text-xs uppercase">{event.date.split(' ')[1]?.slice(0, 3)}</span>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1">
-                  <h3 className="font-body text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {event.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">{event.description}</p>
-                  
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {event.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={14} />
-                      {event.time}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      {event.location}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full btn-accent font-body text-sm"
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {events.map((event, index) => {
+              const date = formatDate(event.event_date);
+              
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="glass rounded-2xl p-6 card-hover group"
                 >
-                  Tickets
-                  <ExternalLink size={14} />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Date badge */}
+                    <div className="flex-shrink-0 w-20 h-20 rounded-xl bg-gradient-to-br from-primary to-accent flex flex-col items-center justify-center text-accent-foreground">
+                      <span className="text-2xl font-bold">{date.day}</span>
+                      <span className="text-xs uppercase">{date.month}</span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1">
+                      <h3 className="font-body text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                        {event.title}
+                      </h3>
+                      {event.description && (
+                        <p className="text-sm text-muted-foreground mb-3">{event.description}</p>
+                      )}
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar size={14} />
+                          {date.full}
+                        </span>
+                        {event.event_time && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={14} />
+                            {event.event_time}
+                          </span>
+                        )}
+                        {event.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin size={14} />
+                            {event.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action */}
+                    {event.ticket_url ? (
+                      <motion.a
+                        href={event.ticket_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-2 px-6 py-3 rounded-full btn-accent font-body text-sm"
+                      >
+                        Tickets
+                        <ExternalLink size={14} />
+                      </motion.a>
+                    ) : (
+                      <div className="px-6 py-3 rounded-full bg-muted/30 text-muted-foreground font-body text-sm">
+                        Bald verfügbar
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         <motion.p
           initial={{ opacity: 0 }}
