@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import klangwunderLogo from '@/assets/klangwunder-logo.png';
 
@@ -6,146 +6,258 @@ interface IntroScreenProps {
   onComplete: () => void;
 }
 
-// SVG path data for handwritten "Klangwunder" letters
-const letterPaths = [
-  // K
-  "M0,0 L0,40 M0,20 L15,0 M0,20 L15,40",
-  // l
-  "M20,0 L20,40",
-  // a
-  "M35,15 C35,10 40,8 45,10 C50,12 50,20 50,25 L50,40 M50,25 C50,30 45,35 40,35 C35,35 35,30 35,25 C35,20 40,15 45,15",
-  // n
-  "M55,15 L55,40 M55,20 C55,15 60,12 65,12 C70,12 75,15 75,25 L75,40",
-  // g
-  "M80,15 C80,10 85,8 90,10 C95,12 100,18 100,25 C100,30 95,35 90,35 C85,35 80,30 80,25 L80,15 M100,25 L100,50 C100,55 95,58 90,58 C85,58 80,55 80,50",
-  // w
-  "M110,15 L115,40 L120,25 L125,40 L130,15",
-  // u
-  "M135,15 L135,30 C135,35 140,40 145,40 C150,40 155,35 155,30 L155,15",
-  // n
-  "M160,15 L160,40 M160,20 C160,15 165,12 170,12 C175,12 180,15 180,25 L180,40",
-  // d
-  "M185,0 L185,40 M185,25 C185,20 190,15 195,15 C200,15 205,20 205,25 C205,30 200,35 195,35 C190,35 185,30 185,25",
-  // e
-  "M210,25 L230,25 C230,20 225,15 220,15 C215,15 210,20 210,25 C210,30 215,35 220,35 C225,35 228,33 230,30",
-  // r
-  "M235,15 L235,40 M235,25 C235,20 240,15 245,15 C250,15 252,17 252,20"
-];
+// SVG Path für jeden Buchstaben in "Klangwunder" - handschriftliche Kurven
+const letterSVGPaths: { [key: string]: string } = {
+  K: "M 5 40 L 5 5 M 5 22 Q 15 22 25 5 M 5 22 Q 15 22 25 40",
+  l: "M 5 5 L 5 40",
+  a: "M 25 15 Q 5 15 5 27 Q 5 40 15 40 Q 25 40 25 27 L 25 15 L 25 40",
+  n: "M 5 15 L 5 40 M 5 20 Q 5 15 15 15 Q 25 15 25 25 L 25 40",
+  g: "M 25 15 Q 5 15 5 27 Q 5 40 15 40 Q 25 40 25 27 L 25 15 L 25 50 Q 25 55 15 55 Q 5 55 5 50",
+  w: "M 5 15 L 10 40 L 17 25 L 24 40 L 30 15",
+  u: "M 5 15 L 5 35 Q 5 40 15 40 Q 25 40 25 35 L 25 15",
+  d: "M 25 5 L 25 40 M 25 27 Q 25 15 15 15 Q 5 15 5 27 Q 5 40 15 40 Q 25 40 25 27",
+  e: "M 5 27 L 25 27 Q 25 15 15 15 Q 5 15 5 27 Q 5 40 15 40 Q 25 40 25 35",
+  r: "M 5 15 L 5 40 M 5 25 Q 5 15 15 15 Q 20 15 22 18"
+};
 
-// Character animation component
-function AnimatedLetter({ 
-  char, 
+// Einzelner animierter SVG-Buchstabe
+function HandwrittenLetter({ 
+  letter, 
   index, 
-  totalChars 
+  isActive 
 }: { 
-  char: string; 
-  index: number; 
-  totalChars: number;
+  letter: string; 
+  index: number;
+  isActive: boolean;
 }) {
-  const delay = index * 0.15;
+  const path = letterSVGPaths[letter];
+  const delay = index * 0.25;
+  const letterWidth = letter === 'w' ? 35 : letter === 'K' ? 30 : 30;
   
+  if (!path) return null;
+
   return (
-    <motion.span
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.4,
-        delay,
-        ease: "easeOut"
-      }}
+    <motion.svg
+      width={letterWidth}
+      height="60"
+      viewBox="0 0 30 60"
       className="inline-block"
+      style={{ overflow: 'visible' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isActive ? 1 : 0 }}
+      transition={{ delay: delay * 0.5, duration: 0.1 }}
     >
-      <motion.span
-        initial={{ 
-          clipPath: "inset(0 100% 0 0)",
-          opacity: 0 
-        }}
+      {/* Glow effect path */}
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter="url(#glow)"
+        initial={{ pathLength: 0, opacity: 0 }}
         animate={{ 
-          clipPath: "inset(0 0% 0 0)",
-          opacity: 1 
+          pathLength: isActive ? 1 : 0,
+          opacity: isActive ? 0.5 : 0
         }}
-        transition={{
-          duration: 0.5,
-          delay: delay + 0.1,
-          ease: [0.65, 0, 0.35, 1]
+        transition={{ 
+          duration: 0.8,
+          delay,
+          ease: "easeOut"
         }}
-        className="inline-block"
-      >
-        {char}
-      </motion.span>
-    </motion.span>
+      />
+      
+      {/* Main visible path */}
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="url(#textGradient)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: isActive ? 1 : 0 }}
+        transition={{ 
+          duration: 0.8,
+          delay,
+          ease: "easeOut"
+        }}
+      />
+      
+      {/* Gradient and glow definitions */}
+      <defs>
+        <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(280 90% 75%)" />
+          <stop offset="50%" stopColor="hsl(270 85% 85%)" />
+          <stop offset="100%" stopColor="hsl(260 90% 75%)" />
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+    </motion.svg>
   );
 }
 
-// Handwritten text animation
+// Schreibfeder/Stift Animation
+function WritingPen({ isActive, progress }: { isActive: boolean; progress: number }) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none"
+      style={{
+        left: `${progress * 100}%`,
+        top: '-20px',
+        transform: 'translateX(-50%)'
+      }}
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ 
+        opacity: isActive ? 1 : 0,
+        scale: isActive ? 1 : 0,
+        rotate: [0, -5, 5, 0]
+      }}
+      transition={{ 
+        opacity: { duration: 0.3 },
+        rotate: { duration: 0.5, repeat: Infinity }
+      }}
+    >
+      {/* Pen tip glow */}
+      <div 
+        className="w-3 h-3 rounded-full bg-primary"
+        style={{
+          boxShadow: '0 0 20px hsl(var(--primary)), 0 0 40px hsl(var(--primary)), 0 0 60px hsl(var(--primary)/0.5)'
+        }}
+      />
+      {/* Ink trail */}
+      <motion.div
+        className="absolute top-1/2 left-1/2 w-1 h-8 -translate-x-1/2 rounded-full"
+        style={{
+          background: 'linear-gradient(to bottom, hsl(var(--primary)), transparent)'
+        }}
+        animate={{ 
+          scaleY: [1, 0.5, 1],
+          opacity: [1, 0.5, 1]
+        }}
+        transition={{ duration: 0.3, repeat: Infinity }}
+      />
+    </motion.div>
+  );
+}
+
+// Haupt Handschrift-Animation
 function HandwrittenText({ 
   text, 
-  isVisible,
-  onComplete 
+  isVisible 
 }: { 
   text: string; 
   isVisible: boolean;
-  onComplete?: () => void;
 }) {
+  const [currentLetterIndex, setCurrentLetterIndex] = useState(-1);
+  
   useEffect(() => {
-    if (isVisible && onComplete) {
-      const timer = setTimeout(onComplete, text.length * 150 + 1000);
-      return () => clearTimeout(timer);
+    if (!isVisible) {
+      setCurrentLetterIndex(-1);
+      return;
     }
-  }, [isVisible, text.length, onComplete]);
+    
+    const timer = setInterval(() => {
+      setCurrentLetterIndex(prev => {
+        if (prev < text.length - 1) return prev + 1;
+        clearInterval(timer);
+        return prev;
+      });
+    }, 250);
+    
+    return () => clearInterval(timer);
+  }, [isVisible, text.length]);
+
+  const progress = useMemo(() => {
+    return Math.min((currentLetterIndex + 1) / text.length, 1);
+  }, [currentLetterIndex, text.length]);
 
   return (
     <motion.div
+      className="relative flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: isVisible ? 1 : 0 }}
-      className="relative"
+      transition={{ duration: 0.5 }}
     >
-      {/* Pen cursor animation */}
-      <motion.div
-        className="absolute -top-2 w-1 h-8 bg-gradient-to-b from-primary to-primary/50 rounded-full"
-        initial={{ x: 0, opacity: 0 }}
-        animate={{
-          x: [0, text.length * 45],
-          opacity: [0, 1, 1, 0]
-        }}
-        transition={{
-          duration: text.length * 0.15,
-          ease: "linear",
-          times: [0, 0.05, 0.95, 1]
-        }}
-        style={{
-          boxShadow: '0 0 20px hsl(var(--primary)), 0 0 40px hsl(var(--primary)/0.5)'
-        }}
-      />
+      {/* Writing pen */}
+      <div className="relative">
+        <WritingPen isActive={isVisible && currentLetterIndex < text.length - 1} progress={progress} />
+        
+        {/* Letters container */}
+        <div className="flex items-end gap-1 sm:gap-2" style={{ height: '80px' }}>
+          {text.split('').map((letter, index) => (
+            <motion.div
+              key={index}
+              className="relative"
+              style={{ 
+                transform: 'scale(1.5) translateY(-10px)',
+                transformOrigin: 'bottom center'
+              }}
+            >
+              <HandwrittenLetter
+                letter={letter}
+                index={index}
+                isActive={index <= currentLetterIndex}
+              />
+            </motion.div>
+          ))}
+        </div>
+        
+        {/* Animated underline */}
+        <motion.div
+          className="absolute -bottom-2 left-0 h-1 rounded-full"
+          style={{
+            background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)))',
+            boxShadow: '0 0 20px hsl(var(--primary)/0.6), 0 0 40px hsl(var(--primary)/0.3)'
+          }}
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ 
+            width: currentLetterIndex >= text.length - 1 ? '100%' : `${progress * 100}%`,
+            opacity: currentLetterIndex >= 0 ? 1 : 0
+          }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
       
-      <h1 className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl text-gradient glow-text whitespace-nowrap">
-        {text.split('').map((char, index) => (
-          <AnimatedLetter
-            key={index}
-            char={char}
-            index={index}
-            totalChars={text.length}
-          />
-        ))}
-      </h1>
-      
-      {/* Underline stroke animation */}
-      <motion.div
-        className="absolute -bottom-4 left-0 h-1 bg-gradient-to-r from-primary via-accent to-primary rounded-full"
-        initial={{ width: 0, opacity: 0 }}
-        animate={{ 
-          width: isVisible ? "100%" : 0,
-          opacity: isVisible ? 1 : 0 
-        }}
-        transition={{ 
-          duration: 1.2, 
-          delay: text.length * 0.12,
-          ease: [0.65, 0, 0.35, 1]
-        }}
-        style={{
-          boxShadow: '0 0 15px hsl(var(--primary)/0.6)'
-        }}
-      />
+      {/* Sparkle effects during writing */}
+      <AnimatePresence>
+        {isVisible && currentLetterIndex < text.length - 1 && currentLetterIndex >= 0 && (
+          <>
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={`sparkle-${currentLetterIndex}-${i}`}
+                className="absolute w-1 h-1 rounded-full bg-primary"
+                style={{
+                  left: `${progress * 100}%`,
+                  top: '50%',
+                  boxShadow: '0 0 10px hsl(var(--primary))'
+                }}
+                initial={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  x: 0,
+                  y: 0
+                }}
+                animate={{ 
+                  opacity: 0,
+                  scale: 0,
+                  x: (Math.random() - 0.5) * 60,
+                  y: (Math.random() - 0.5) * 60
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -187,18 +299,18 @@ function FloatingParticle({ delay, size }: { delay: number; size: number }) {
 
 // Musical note particle
 function MusicalNote({ delay }: { delay: number }) {
-  const notes = ['♪', '♫', '♬', '♩', '♭', '♯'];
+  const notes = ['♪', '♫', '♬', '♩'];
   const note = notes[Math.floor(Math.random() * notes.length)];
   const randomX = 10 + Math.random() * 80;
   const randomDuration = 5 + Math.random() * 3;
   
   return (
     <motion.div
-      className="absolute text-primary/40 font-display pointer-events-none select-none"
+      className="absolute text-primary/50 pointer-events-none select-none"
       style={{
         left: `${randomX}%`,
-        fontSize: `${1 + Math.random() * 1.5}rem`,
-        textShadow: '0 0 10px hsl(var(--primary)/0.5)'
+        fontSize: `${1.5 + Math.random() * 1.5}rem`,
+        textShadow: '0 0 15px hsl(var(--primary)/0.6)'
       }}
       initial={{
         y: typeof window !== 'undefined' ? window.innerHeight + 50 : 900,
@@ -208,9 +320,9 @@ function MusicalNote({ delay }: { delay: number }) {
       }}
       animate={{
         y: -100,
-        opacity: [0, 0.6, 0.6, 0],
+        opacity: [0, 0.7, 0.7, 0],
         rotate: [0, 360],
-        scale: [0.5, 1, 1, 0.3]
+        scale: [0.5, 1.2, 1.2, 0.3]
       }}
       transition={{
         duration: randomDuration,
@@ -230,18 +342,18 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
   const [showEnterButton, setShowEnterButton] = useState(false);
 
   useEffect(() => {
-    // Phase timing
+    // Phase timing - längere Zeit für Handschrift
     const handwritingTimer = setTimeout(() => {
       setPhase('transform');
-    }, 3000);
+    }, 4500);
 
     const logoTimer = setTimeout(() => {
       setPhase('logo');
-    }, 4200);
+    }, 5500);
 
     const buttonTimer = setTimeout(() => {
       setShowEnterButton(true);
-    }, 5000);
+    }, 6500);
 
     return () => {
       clearTimeout(handwritingTimer);
@@ -270,35 +382,41 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
         >
           {/* Animated particles background */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <FloatingParticle key={`particle-${i}`} delay={i * 0.3} size={4 + Math.random() * 8} />
+            {Array.from({ length: 25 }).map((_, i) => (
+              <FloatingParticle key={`particle-${i}`} delay={i * 0.4} size={4 + Math.random() * 8} />
             ))}
-            {Array.from({ length: 15 }).map((_, i) => (
-              <MusicalNote key={`note-${i}`} delay={i * 0.5 + 1} />
+            {Array.from({ length: 12 }).map((_, i) => (
+              <MusicalNote key={`note-${i}`} delay={i * 0.6 + 0.5} />
             ))}
           </div>
 
-          {/* Radial glow behind content */}
+          {/* Multiple radial glows */}
           <div 
-            className="absolute w-[600px] h-[600px] rounded-full opacity-30 blur-3xl pointer-events-none"
+            className="absolute w-[800px] h-[800px] rounded-full opacity-20 blur-3xl pointer-events-none"
             style={{
-              background: 'radial-gradient(circle, hsl(var(--primary)/0.4), transparent 70%)'
+              background: 'radial-gradient(circle, hsl(var(--primary)/0.5), transparent 60%)'
+            }}
+          />
+          <div 
+            className="absolute w-[400px] h-[400px] rounded-full opacity-30 blur-2xl pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--accent)/0.4), transparent 70%)'
             }}
           />
 
           {/* Main content container */}
-          <div className="relative z-10 flex flex-col items-center justify-center">
+          <div className="relative z-10 flex flex-col items-center justify-center min-h-[300px]">
             {/* Handwritten text phase */}
             <motion.div
               animate={{
                 opacity: phase === 'handwriting' ? 1 : 0,
-                scale: phase === 'transform' ? 0.8 : 1,
-                y: phase === 'transform' ? -50 : 0,
-                filter: phase === 'transform' ? 'blur(10px)' : 'blur(0px)'
+                scale: phase === 'transform' ? 0.7 : 1,
+                y: phase === 'transform' ? -80 : 0,
+                filter: phase === 'transform' ? 'blur(15px)' : 'blur(0px)'
               }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 1, ease: "easeInOut" }}
               className="absolute"
-              style={{ display: phase === 'logo' ? 'none' : 'block' }}
+              style={{ display: phase === 'logo' ? 'none' : 'flex' }}
             >
               <HandwrittenText 
                 text="Klangwunder" 
@@ -315,8 +433,8 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
                 rotate: phase === 'logo' ? 0 : -180
               }}
               transition={{ 
-                duration: 1,
-                ease: [0.34, 1.56, 0.64, 1] // spring-like
+                duration: 1.2,
+                ease: [0.34, 1.56, 0.64, 1]
               }}
               className="flex flex-col items-center"
             >
@@ -325,7 +443,7 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
                 animate={{
                   boxShadow: [
                     '0 0 40px hsl(var(--primary)/0.3)',
-                    '0 0 80px hsl(var(--primary)/0.5)',
+                    '0 0 100px hsl(var(--primary)/0.5)',
                     '0 0 40px hsl(var(--primary)/0.3)'
                   ]
                 }}
@@ -335,11 +453,11 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
                 <motion.img
                   src={klangwunderLogo}
                   alt="Klangwunder Logo"
-                  className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 object-contain"
+                  className="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 object-contain"
                   animate={{
                     filter: [
                       'drop-shadow(0 0 20px hsl(var(--primary)/0.5))',
-                      'drop-shadow(0 0 40px hsl(var(--primary)/0.7))',
+                      'drop-shadow(0 0 50px hsl(var(--primary)/0.8))',
                       'drop-shadow(0 0 20px hsl(var(--primary)/0.5))'
                     ]
                   }}
@@ -349,22 +467,22 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
 
               {/* Brand name under logo */}
               <motion.h2
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ 
                   opacity: phase === 'logo' ? 1 : 0, 
-                  y: phase === 'logo' ? 0 : 20 
+                  y: phase === 'logo' ? 0 : 30 
                 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="font-display text-4xl sm:text-5xl md:text-6xl text-gradient glow-text mt-6"
+                transition={{ delay: 0.6, duration: 0.8 }}
+                className="font-display text-4xl sm:text-5xl md:text-6xl text-gradient glow-text mt-8"
               >
                 Klangwunder
               </motion.h2>
 
               <motion.p
                 initial={{ opacity: 0 }}
-                animate={{ opacity: phase === 'logo' ? 0.6 : 0 }}
-                transition={{ delay: 0.8, duration: 0.6 }}
-                className="font-body text-muted-foreground mt-2 text-lg"
+                animate={{ opacity: phase === 'logo' ? 0.7 : 0 }}
+                transition={{ delay: 1, duration: 0.6 }}
+                className="font-body text-muted-foreground mt-3 text-lg tracking-wide"
               >
                 Klänge, die Wunder wirken
               </motion.p>
@@ -379,37 +497,45 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
               y: showEnterButton ? 0 : 50 
             }}
             transition={{ duration: 0.6 }}
-            className="absolute bottom-32 z-10"
+            className="absolute bottom-28 z-10"
           >
             <motion.button
               onClick={handleEnter}
-              className="group relative px-12 py-5 rounded-full glass border border-primary/30 hover:border-primary/60 transition-all duration-500 overflow-hidden"
-              whileHover={{ scale: 1.05 }}
+              className="group relative px-14 py-5 rounded-full glass border border-primary/40 hover:border-primary/80 transition-all duration-500 overflow-hidden"
+              whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
             >
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20"
+                className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10"
                 animate={{
                   x: ['-100%', '100%']
                 }}
                 transition={{
-                  duration: 2,
+                  duration: 2.5,
                   repeat: Infinity,
                   ease: "linear"
                 }}
               />
-              <span className="relative z-10 text-lg font-body tracking-wider text-foreground group-hover:text-primary-foreground transition-colors duration-300">
-                ▶ Eintreten
+              <span className="relative z-10 text-xl font-body tracking-widest text-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-3">
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  ▶
+                </motion.span>
+                Eintreten
               </span>
-              <div className="absolute inset-0 rounded-full glow-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ boxShadow: '0 0 30px hsl(var(--primary)/0.5)' }}
+              />
             </motion.button>
           </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: showEnterButton ? 0.5 : 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="absolute bottom-16 text-sm text-muted-foreground font-body"
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="absolute bottom-14 text-sm text-muted-foreground font-body tracking-wide"
           >
             Klicke um die Musik zu erleben
           </motion.p>
