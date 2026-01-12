@@ -6,7 +6,7 @@ interface IntroScreenProps {
   onComplete: () => void;
 }
 
-// Einzelner Buchstabe mit Schreibanimation
+// Einzelner Buchstabe mit dramatischer Schreibanimation
 function WrittenLetter({ 
   letter, 
   index,
@@ -16,39 +16,64 @@ function WrittenLetter({
   index: number;
   isActive: boolean;
 }) {
-  const delay = index * 0.18;
+  const delay = index * 0.35; // Viel langsamer - 350ms pro Buchstabe
   
   return (
     <motion.span
-      className="inline-block font-display"
+      className="inline-block font-display relative"
       style={{
-        textShadow: '0 0 30px hsl(var(--primary)/0.8), 0 0 60px hsl(var(--primary)/0.4)',
-        color: 'hsl(var(--primary-foreground))'
+        textShadow: `
+          0 0 40px hsl(var(--primary)),
+          0 0 80px hsl(var(--primary)/0.8),
+          0 0 120px hsl(var(--primary)/0.6),
+          0 0 160px hsl(var(--primary)/0.4)
+        `,
+        color: 'transparent',
+        background: 'linear-gradient(180deg, hsl(280 100% 85%) 0%, hsl(var(--primary)) 50%, hsl(260 100% 70%) 100%)',
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        filter: 'drop-shadow(0 0 30px hsl(var(--primary)))'
       }}
       initial={{ 
         opacity: 0,
-        y: 30,
-        scale: 0.5,
+        y: 80,
+        scale: 0,
+        rotateX: -180,
         rotateY: -90
       }}
       animate={isActive ? { 
         opacity: 1,
         y: 0,
         scale: 1,
+        rotateX: 0,
         rotateY: 0
       } : {
         opacity: 0,
-        y: 30,
-        scale: 0.5,
+        y: 80,
+        scale: 0,
+        rotateX: -180,
         rotateY: -90
       }}
       transition={{
-        duration: 0.5,
+        duration: 0.9,
         delay,
-        ease: [0.34, 1.56, 0.64, 1]
+        ease: [0.22, 1.2, 0.36, 1]
       }}
     >
       {letter}
+      {/* Glow-Effekt hinter dem Buchstaben */}
+      {isActive && (
+        <motion.span
+          className="absolute inset-0 blur-xl"
+          style={{
+            background: 'hsl(var(--primary))',
+            opacity: 0.5
+          }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.2, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: delay + 0.3 }}
+        />
+      )}
     </motion.span>
   );
 }
@@ -138,7 +163,7 @@ function AnimatedTitle({
         setIsComplete(true);
         clearInterval(interval);
       }
-    }, 180);
+    }, 350); // Viel langsamer - 350ms pro Buchstabe
     
     return () => clearInterval(interval);
   }, [isActive, text.length]);
@@ -152,8 +177,8 @@ function AnimatedTitle({
         totalLetters={text.length}
       />
       
-      {/* Buchstaben */}
-      <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl whitespace-nowrap">
+      {/* Buchstaben - VIEL GRÖSSER */}
+      <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[12rem] whitespace-nowrap font-black tracking-tight">
         {text.split('').map((letter, index) => (
           <WrittenLetter
             key={index}
@@ -291,18 +316,18 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
   const [showEnterButton, setShowEnterButton] = useState(false);
 
   useEffect(() => {
-    // Phase timing
+    // Phase timing - länger wegen langsamerer Animation
     const writingTimer = setTimeout(() => {
       setPhase('transform');
-    }, 4000);
+    }, 6500); // 11 Buchstaben * 350ms + Puffer
 
     const logoTimer = setTimeout(() => {
       setPhase('logo');
-    }, 5000);
+    }, 7500);
 
     const buttonTimer = setTimeout(() => {
       setShowEnterButton(true);
-    }, 6000);
+    }, 8500);
 
     return () => {
       clearTimeout(writingTimer);
