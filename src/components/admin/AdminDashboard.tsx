@@ -56,17 +56,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       </button>
 
       {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ 
-          x: isSidebarOpen ? 0 : '-100%',
-          opacity: isSidebarOpen ? 1 : 0
-        }}
-        className={`fixed inset-y-0 left-0 z-40 w-72 glass-strong border-r border-primary/10 flex flex-col md:relative md:translate-x-0 md:opacity-100`}
-        style={{ 
-          transform: 'none',
-          opacity: 1
-        }}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-72 glass-strong border-r border-primary/10 flex flex-col transition-transform duration-300 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:relative md:translate-x-0`}
       >
         {/* Logo */}
         <div className="p-6 border-b border-primary/10">
@@ -127,7 +120,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <span className="font-body">Abmelden</span>
           </motion.button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (

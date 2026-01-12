@@ -2,11 +2,13 @@ import { motion } from 'framer-motion';
 import { ChevronDown, Play } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import heroVideo from '@/assets/hero-video.mp4';
 
 export function HeroSection() {
-  const { playTrack, addToQueue, setQueue } = useAudio();
+  const { playTrack, setQueue } = useAudio();
   const { tracks } = useTracks();
+  const { settings } = useSiteSettings();
 
   const handlePlayAll = () => {
     if (tracks.length > 0) {
@@ -21,6 +23,10 @@ export function HeroSection() {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Use settings or fallback to defaults
+  const heroTitle = settings.hero_title || 'Klangwunder';
+  const heroSubtitle = settings.hero_subtitle || 'Erlebe Klänge, die Wunder wirken. Tauche ein in eine Welt aus atmosphärischen Beats und melodischen Reisen.';
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -45,7 +51,7 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           <h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-gradient mb-6 glow-text">
-            Klangwunder
+            {heroTitle}
           </h1>
         </motion.div>
 
@@ -55,8 +61,7 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="font-body text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
         >
-          Erlebe Klänge, die Wunder wirken. Tauche ein in eine Welt aus 
-          atmosphärischen Beats und melodischen Reisen.
+          {heroSubtitle}
         </motion.p>
 
         <motion.div
