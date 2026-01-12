@@ -15,6 +15,12 @@ interface SiteSettings {
   tiktok_url?: string;
   twitter_url?: string;
   booking_email?: string;
+  stat_tracks_value?: string;
+  stat_tracks_label?: string;
+  stat_streams_value?: string;
+  stat_streams_label?: string;
+  stat_years_value?: string;
+  stat_years_label?: string;
 }
 
 export function useSiteSettings() {
