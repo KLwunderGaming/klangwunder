@@ -17,6 +17,7 @@ import { TracksManager } from './TracksManager';
 import { PlaylistsManager } from './PlaylistsManager';
 import { SettingsManager } from './SettingsManager';
 import { ContentManager } from './ContentManager';
+import { DashboardOverview } from './DashboardOverview';
 
 interface AdminDashboardProps {
   onLogout: () => void;
