@@ -11,6 +11,7 @@ import { EventsSection } from '@/components/sections/EventsSection';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { Footer } from '@/components/Footer';
 import { MusicPlayer } from '@/components/player/MusicPlayer';
+import { LoginButton } from '@/components/LoginButton';
 import { useAudio } from '@/contexts/AudioContext';
 
 function MainContent() {
@@ -30,6 +31,7 @@ function MainContent() {
         <Footer />
       </main>
       <MusicPlayer />
+      <LoginButton />
     </>
   );
 }
