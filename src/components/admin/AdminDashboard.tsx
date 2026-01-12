@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   FileText,
-  LayoutDashboard
+  LayoutDashboard,
+  CalendarDays
 } from 'lucide-react';
 import klangwunderIcon from '@/assets/klangwunder-icon.png';
 import { TracksManager } from './TracksManager';
@@ -18,12 +19,13 @@ import { PlaylistsManager } from './PlaylistsManager';
 import { SettingsManager } from './SettingsManager';
 import { ContentManager } from './ContentManager';
 import { DashboardOverview } from './DashboardOverview';
+import { EventsManager } from './EventsManager';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = 'dashboard' | 'content' | 'tracks' | 'playlists' | 'settings';
+type Tab = 'dashboard' | 'content' | 'tracks' | 'playlists' | 'events' | 'settings';
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -39,6 +41,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { id: 'content' as Tab, label: 'Seiten & Inhalte', icon: FileText },
     { id: 'tracks' as Tab, label: 'Tracks', icon: Music },
     { id: 'playlists' as Tab, label: 'Playlists', icon: ListMusic },
+    { id: 'events' as Tab, label: 'Events', icon: CalendarDays },
     { id: 'settings' as Tab, label: 'Einstellungen', icon: Settings },
   ];
 
@@ -152,6 +155,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               {activeTab === 'content' && 'Bearbeite Seiten und Texte'}
               {activeTab === 'tracks' && 'Verwalte deine Musiksammlung'}
               {activeTab === 'playlists' && 'Erstelle und bearbeite Playlists'}
+              {activeTab === 'events' && 'Verwalte deine Konzerte und Events'}
               {activeTab === 'settings' && 'Passe die Webseite an'}
             </p>
           </motion.div>
@@ -167,6 +171,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             {activeTab === 'content' && <ContentManager />}
             {activeTab === 'tracks' && <TracksManager />}
             {activeTab === 'playlists' && <PlaylistsManager />}
+            {activeTab === 'events' && <EventsManager />}
             {activeTab === 'settings' && <SettingsManager />}
           </motion.div>
         </div>

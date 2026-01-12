@@ -56,6 +56,45 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_time: string | null
+          id: string
+          is_visible: boolean | null
+          location: string | null
+          ticket_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_time?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location?: string | null
+          ticket_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location?: string | null
+          ticket_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       playlist_tracks: {
         Row: {
           created_at: string
