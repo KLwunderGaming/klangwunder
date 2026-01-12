@@ -1,16 +1,46 @@
 import { motion } from 'framer-motion';
-import { Mail, Instagram, Youtube, Music2, Send } from 'lucide-react';
+import { Mail, Instagram, Youtube, Music2, Send, CloudRain, Twitter } from 'lucide-react';
 import { useState } from 'react';
-
-const socialLinks = [
-  { icon: Instagram, label: 'Instagram', href: '#', color: 'hover:text-pink-500' },
-  { icon: Youtube, label: 'YouTube', href: '#', color: 'hover:text-red-500' },
-  { icon: Music2, label: 'Spotify', href: '#', color: 'hover:text-green-500' },
-];
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function ContactSection() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { settings, isLoading } = useSiteSettings();
+
+  // Build social links dynamically from settings
+  const socialLinks = [
+    { 
+      icon: Instagram, 
+      label: 'Instagram', 
+      href: settings.instagram_url, 
+      color: 'hover:text-pink-500' 
+    },
+    { 
+      icon: Youtube, 
+      label: 'YouTube', 
+      href: settings.youtube_url, 
+      color: 'hover:text-red-500' 
+    },
+    { 
+      icon: Music2, 
+      label: 'Spotify', 
+      href: settings.spotify_url, 
+      color: 'hover:text-green-500' 
+    },
+    { 
+      icon: CloudRain, 
+      label: 'SoundCloud', 
+      href: settings.soundcloud_url, 
+      color: 'hover:text-orange-500' 
+    },
+    { 
+      icon: Twitter, 
+      label: 'TikTok', 
+      href: settings.tiktok_url, 
+      color: 'hover:text-cyan-400' 
+    },
+  ].filter(link => link.href); // Only show configured links
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +50,8 @@ export function ContactSection() {
       setTimeout(() => setSubmitted(false), 3000);
     }
   };
+
+  const bookingEmail = settings.booking_email || settings.contact_email || 'booking@klangwunder.de';
 
   return (
     <section id="contact" className="py-24 relative">
@@ -49,22 +81,37 @@ export function ContactSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex justify-center gap-6 mb-12"
           >
-            {socialLinks.map((social, index) => (
-              <motion.a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-14 h-14 rounded-full glass flex items-center justify-center text-foreground transition-colors duration-300 ${social.color}`}
-                whileHover={{ scale: 1.1, y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-              >
-                <social.icon size={24} />
-              </motion.a>
-            ))}
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className="w-14 h-14 rounded-full bg-muted/30 animate-pulse" 
+                />
+              ))
+            ) : socialLinks.length > 0 ? (
+              socialLinks.map((social, index) => (
+                <motion.a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-14 h-14 rounded-full glass flex items-center justify-center text-foreground transition-colors duration-300 ${social.color}`}
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  title={social.label}
+                >
+                  <social.icon size={24} />
+                </motion.a>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Social Media Links werden im Admin-Dashboard konfiguriert.
+              </p>
+            )}
           </motion.div>
 
           {/* Email Contact */}
@@ -121,10 +168,10 @@ export function ContactSection() {
             <p className="text-muted-foreground font-body">
               Für Booking-Anfragen: <br />
               <a 
-                href="mailto:booking@klangwunder.de" 
+                href={`mailto:${bookingEmail}`}
                 className="text-primary hover:text-accent transition-colors"
               >
-                booking@klangwunder.de
+                {bookingEmail}
               </a>
             </p>
           </motion.div>

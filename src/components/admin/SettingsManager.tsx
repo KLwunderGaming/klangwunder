@@ -11,16 +11,28 @@ interface Setting {
 }
 
 const defaultSettings = [
-  { key: 'site_title', label: 'Seitentitel', placeholder: 'Klangwunder', type: 'text' },
-  { key: 'site_description', label: 'Beschreibung', placeholder: 'Erlebe Klänge, die Wunder wirken...', type: 'textarea' },
-  { key: 'hero_title', label: 'Hero Titel', placeholder: 'Klangwunder', type: 'text' },
-  { key: 'hero_subtitle', label: 'Hero Untertitel', placeholder: 'Klänge, die Wunder wirken', type: 'text' },
-  { key: 'about_text', label: 'Über mich Text', placeholder: 'Erzähle etwas über dich...', type: 'textarea' },
-  { key: 'contact_email', label: 'Kontakt E-Mail', placeholder: 'kontakt@klangwunder.de', type: 'email' },
-  { key: 'instagram_url', label: 'Instagram URL', placeholder: 'https://instagram.com/...', type: 'url' },
-  { key: 'youtube_url', label: 'YouTube URL', placeholder: 'https://youtube.com/...', type: 'url' },
-  { key: 'spotify_url', label: 'Spotify URL', placeholder: 'https://open.spotify.com/...', type: 'url' },
-  { key: 'soundcloud_url', label: 'SoundCloud URL', placeholder: 'https://soundcloud.com/...', type: 'url' },
+  // Website Allgemein
+  { key: 'site_title', label: 'Künstlername / Seitentitel', placeholder: 'Klangwunder', type: 'text', group: 'general' },
+  { key: 'site_description', label: 'Kurzbeschreibung (SEO)', placeholder: 'Erlebe Klänge, die Wunder wirken...', type: 'textarea', group: 'general' },
+  
+  // Hero Section
+  { key: 'hero_title', label: 'Hero Titel', placeholder: 'Klangwunder', type: 'text', group: 'hero' },
+  { key: 'hero_subtitle', label: 'Hero Untertitel', placeholder: 'Klänge, die Wunder wirken', type: 'text', group: 'hero' },
+  
+  // About
+  { key: 'about_text', label: 'Über mich Text', placeholder: 'Erzähle etwas über dich...', type: 'textarea', group: 'about' },
+  
+  // Kontakt
+  { key: 'contact_email', label: 'Kontakt E-Mail', placeholder: 'kontakt@klangwunder.de', type: 'email', group: 'contact' },
+  { key: 'booking_email', label: 'Booking E-Mail', placeholder: 'booking@klangwunder.de', type: 'email', group: 'contact' },
+  
+  // Social Media
+  { key: 'instagram_url', label: 'Instagram', placeholder: 'https://instagram.com/klangwunder', type: 'url', group: 'social' },
+  { key: 'youtube_url', label: 'YouTube', placeholder: 'https://youtube.com/@klangwunder', type: 'url', group: 'social' },
+  { key: 'spotify_url', label: 'Spotify', placeholder: 'https://open.spotify.com/artist/...', type: 'url', group: 'social' },
+  { key: 'soundcloud_url', label: 'SoundCloud', placeholder: 'https://soundcloud.com/klangwunder', type: 'url', group: 'social' },
+  { key: 'tiktok_url', label: 'TikTok', placeholder: 'https://tiktok.com/@klangwunder', type: 'url', group: 'social' },
+  { key: 'twitter_url', label: 'X / Twitter', placeholder: 'https://x.com/klangwunder', type: 'url', group: 'social' },
 ];
 
 export function SettingsManager() {
@@ -81,51 +93,77 @@ export function SettingsManager() {
     );
   }
 
+  const settingsGroups = [
+    { key: 'general', label: 'Allgemein', icon: '⚙️' },
+    { key: 'hero', label: 'Hero Section', icon: '🎬' },
+    { key: 'about', label: 'Über mich', icon: '👤' },
+    { key: 'contact', label: 'Kontakt', icon: '📧' },
+    { key: 'social', label: 'Social Media', icon: '🔗' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Settings Grid */}
-      <div className="glass rounded-2xl p-6 space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-xl">Webseiten-Einstellungen</h3>
-          <motion.button
-            onClick={fetchSettings}
-            className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground"
-            whileHover={{ rotate: 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RefreshCw size={18} />
-          </motion.button>
-        </div>
+      {/* Grouped Settings */}
+      {settingsGroups.map((group) => {
+        const groupSettings = defaultSettings.filter(s => s.group === group.key);
+        if (groupSettings.length === 0) return null;
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          {defaultSettings.map((setting) => (
-            <div 
-              key={setting.key}
-              className={setting.type === 'textarea' ? 'sm:col-span-2' : ''}
-            >
-              <label className="text-sm text-muted-foreground mb-2 block">
-                {setting.label}
-              </label>
-              {setting.type === 'textarea' ? (
-                <textarea
-                  value={settings[setting.key] || ''}
-                  onChange={(e) => updateSetting(setting.key, e.target.value)}
-                  placeholder={setting.placeholder}
-                  className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none resize-none"
-                  rows={4}
-                />
-              ) : (
-                <input
-                  type={setting.type}
-                  value={settings[setting.key] || ''}
-                  onChange={(e) => updateSetting(setting.key, e.target.value)}
-                  placeholder={setting.placeholder}
-                  className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none"
-                />
-              )}
+        return (
+          <motion.div
+            key={group.key}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">{group.icon}</span>
+              <h3 className="font-display text-xl">{group.label}</h3>
             </div>
-          ))}
-        </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {groupSettings.map((setting) => (
+                <div 
+                  key={setting.key}
+                  className={setting.type === 'textarea' ? 'sm:col-span-2' : ''}
+                >
+                  <label className="text-sm text-muted-foreground mb-2 block">
+                    {setting.label}
+                  </label>
+                  {setting.type === 'textarea' ? (
+                    <textarea
+                      value={settings[setting.key] || ''}
+                      onChange={(e) => updateSetting(setting.key, e.target.value)}
+                      placeholder={setting.placeholder}
+                      className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none resize-none transition-colors"
+                      rows={4}
+                    />
+                  ) : (
+                    <input
+                      type={setting.type}
+                      value={settings[setting.key] || ''}
+                      onChange={(e) => updateSetting(setting.key, e.target.value)}
+                      placeholder={setting.placeholder}
+                      className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none transition-colors"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      })}
+
+      {/* Refresh Button */}
+      <div className="flex justify-end">
+        <motion.button
+          onClick={fetchSettings}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <RefreshCw size={16} />
+          Aktualisieren
+        </motion.button>
       </div>
 
       {/* Save Button */}
