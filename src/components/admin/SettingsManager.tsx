@@ -98,21 +98,32 @@ export function SettingsManager() {
     setIsSaving(true);
 
     try {
-      // Upsert all settings
-      for (const [key, value] of Object.entries(settings)) {
-        const { error } = await supabase
-          .from('site_settings')
-          .upsert(
-            { key, value: value || null },
-            { onConflict: 'key' }
-          );
-        
-        if (error) throw error;
+      // Prepare all settings for batch upsert
+      const settingsToSave = defaultSettings.map(s => ({
+        key: s.key,
+        value: settings[s.key] || null
+      }));
+
+      // Use batch upsert for all settings at once
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert(settingsToSave, { 
+          onConflict: 'key',
+          ignoreDuplicates: false 
+        });
+      
+      if (error) {
+        console.error('Save error:', error);
+        throw error;
       }
 
-      toast.success('Einstellungen gespeichert');
-    } catch (err) {
-      toast.error('Fehler beim Speichern');
+      toast.success('Einstellungen gespeichert!');
+      
+      // Refetch to confirm
+      await fetchSettings();
+    } catch (err: any) {
+      console.error('Error saving settings:', err);
+      toast.error(`Fehler: ${err.message || 'Speichern fehlgeschlagen'}`);
     } finally {
       setIsSaving(false);
     }
