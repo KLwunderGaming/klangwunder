@@ -1,23 +1,33 @@
 import { motion } from 'framer-motion';
-import { Play, ListMusic } from 'lucide-react';
+import { Play, ListMusic, Loader2 } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
-import type { Playlist } from '@/types/music';
+import type { Playlist, Track } from '@/types/music';
+import { useState, useEffect } from 'react';
 
 interface PlaylistCardProps {
   playlist: Playlist;
   index: number;
+  onPlay: (tracks: Track[]) => void;
 }
 
-function PlaylistCard({ playlist, index }: PlaylistCardProps) {
-  const { playTrack, setQueue } = useAudio();
+function PlaylistCard({ playlist, index, onPlay }: PlaylistCardProps) {
   const { getPlaylistTracks } = useTracks();
+  const [trackCount, setTrackCount] = useState(0);
+  const [playlistTracks, setPlaylistTracks] = useState<Track[]>([]);
+
+  useEffect(() => {
+    const loadTracks = async () => {
+      const tracks = await getPlaylistTracks(playlist.id);
+      setPlaylistTracks(tracks);
+      setTrackCount(tracks.length);
+    };
+    loadTracks();
+  }, [playlist.id, getPlaylistTracks]);
 
   const handlePlay = () => {
-    const playlistTracks = getPlaylistTracks(playlist);
     if (playlistTracks.length > 0) {
-      setQueue(playlistTracks);
-      playTrack(playlistTracks[0]);
+      onPlay(playlistTracks);
     }
   };
 
@@ -30,10 +40,18 @@ function PlaylistCard({ playlist, index }: PlaylistCardProps) {
       className="group relative glass rounded-2xl overflow-hidden card-hover"
     >
       {/* Cover */}
-      <div className="aspect-square relative bg-gradient-to-br from-primary/40 to-accent/40">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <ListMusic className="w-16 h-16 text-foreground/30" />
-        </div>
+      <div className="aspect-square relative overflow-hidden">
+        {playlist.cover_url ? (
+          <img 
+            src={playlist.cover_url} 
+            alt={playlist.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-accent/40 flex items-center justify-center">
+            <ListMusic className="w-16 h-16 text-foreground/30" />
+          </div>
+        )}
         
         {/* Play button overlay */}
         <motion.button
@@ -51,9 +69,11 @@ function PlaylistCard({ playlist, index }: PlaylistCardProps) {
       {/* Info */}
       <div className="p-4">
         <h3 className="font-body font-semibold text-lg mb-1 truncate">{playlist.name}</h3>
-        <p className="text-sm text-muted-foreground line-clamp-2">{playlist.description}</p>
+        {playlist.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{playlist.description}</p>
+        )}
         <p className="text-xs text-muted-foreground/70 mt-2">
-          {playlist.trackIds.length} Tracks
+          {trackCount} Tracks
         </p>
       </div>
     </motion.div>
@@ -62,6 +82,19 @@ function PlaylistCard({ playlist, index }: PlaylistCardProps) {
 
 export function PlaylistsSection() {
   const { playlists, isLoading } = useTracks();
+  const { playTrack, setQueue } = useAudio();
+
+  const handlePlayPlaylist = (tracks: Track[]) => {
+    if (tracks.length > 0) {
+      setQueue(tracks);
+      playTrack(tracks[0]);
+    }
+  };
+
+  // Don't render if no playlists
+  if (!isLoading && playlists.length === 0) {
+    return null;
+  }
 
   return (
     <section id="playlists" className="py-24 relative">
@@ -82,21 +115,18 @@ export function PlaylistsSection() {
         </motion.div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
-                <div className="aspect-square bg-muted" />
-                <div className="p-4">
-                  <div className="h-5 w-32 bg-muted rounded mb-2" />
-                  <div className="h-3 w-full bg-muted/50 rounded" />
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {playlists.map((playlist, index) => (
-              <PlaylistCard key={playlist.id} playlist={playlist} index={index} />
+              <PlaylistCard 
+                key={playlist.id} 
+                playlist={playlist} 
+                index={index}
+                onPlay={handlePlayPlaylist}
+              />
             ))}
           </div>
         )}
