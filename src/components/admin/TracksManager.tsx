@@ -47,8 +47,9 @@ export function TracksManager() {
     album: '',
     genre: '',
   });
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioFiles, setAudioFiles] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Group tracks by album
   const { albums, albumTracks } = useMemo(() => {
@@ -95,9 +96,10 @@ export function TracksManager() {
 
   const resetForm = () => {
     setFormData({ title: '', artist: 'Klangwunder', album: '', genre: '' });
-    setAudioFile(null);
+    setAudioFiles([]);
     setCoverFile(null);
     setEditingTrack(null);
+    setUploadProgress(null);
   };
 
   const openEditModal = (track: Track) => {
@@ -119,44 +121,49 @@ export function TracksManager() {
     setShowModal(true);
   };
 
+  const uploadSingleTrack = async (audioFile: File, coverUrl: string | null) => {
+    const audioExt = audioFile.name.split('.').pop();
+    const audioPath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${audioExt}`;
+    
+    const { error: audioError } = await supabase.storage
+      .from('audio')
+      .upload(audioPath, audioFile);
+    
+    if (audioError) throw new Error('Audio-Upload fehlgeschlagen: ' + audioError.message);
+    
+    const { data: { publicUrl: audioPublicUrl } } = supabase.storage
+      .from('audio')
+      .getPublicUrl(audioPath);
+
+    // Get duration from audio file
+    let duration = 0;
+    const audio = new Audio(URL.createObjectURL(audioFile));
+    await new Promise((resolve) => {
+      audio.onloadedmetadata = () => {
+        duration = Math.round(audio.duration);
+        resolve(null);
+      };
+      audio.onerror = () => resolve(null);
+    });
+
+    // Extract title from filename (remove extension)
+    const title = audioFile.name.replace(/\.[^/.]+$/, '');
+
+    return {
+      title,
+      audioUrl: audioPublicUrl,
+      duration,
+      coverUrl,
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUploading(true);
 
     try {
-      let audioUrl = editingTrack?.audio_url || null;
+      // Upload cover file first (shared across all tracks if multiple)
       let coverUrl = editingTrack?.cover_url || null;
-      let duration = editingTrack?.duration || 0;
-
-      // Upload audio file
-      if (audioFile) {
-        const audioExt = audioFile.name.split('.').pop();
-        const audioPath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${audioExt}`;
-        
-        const { error: audioError } = await supabase.storage
-          .from('audio')
-          .upload(audioPath, audioFile);
-        
-        if (audioError) throw new Error('Audio-Upload fehlgeschlagen: ' + audioError.message);
-        
-        const { data: { publicUrl: audioPublicUrl } } = supabase.storage
-          .from('audio')
-          .getPublicUrl(audioPath);
-        
-        audioUrl = audioPublicUrl;
-
-        // Get duration from audio file
-        const audio = new Audio(URL.createObjectURL(audioFile));
-        await new Promise((resolve) => {
-          audio.onloadedmetadata = () => {
-            duration = Math.round(audio.duration);
-            resolve(null);
-          };
-          audio.onerror = () => resolve(null);
-        });
-      }
-
-      // Upload cover file
       if (coverFile) {
         const coverExt = coverFile.name.split('.').pop();
         const coverPath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${coverExt}`;
@@ -174,17 +181,27 @@ export function TracksManager() {
         coverUrl = coverPublicUrl;
       }
 
-      const trackData = {
-        title: formData.title,
-        artist: formData.artist,
-        album: formData.album || null,
-        genre: formData.genre || null,
-        duration,
-        audio_url: audioUrl,
-        cover_url: coverUrl,
-      };
-
       if (editingTrack) {
+        // Update existing track
+        let audioUrl = editingTrack.audio_url;
+        let duration = editingTrack.duration;
+
+        if (audioFiles.length > 0) {
+          const uploaded = await uploadSingleTrack(audioFiles[0], coverUrl);
+          audioUrl = uploaded.audioUrl;
+          duration = uploaded.duration;
+        }
+
+        const trackData = {
+          title: formData.title,
+          artist: formData.artist,
+          album: formData.album || null,
+          genre: formData.genre || null,
+          duration,
+          audio_url: audioUrl,
+          cover_url: coverUrl,
+        };
+
         const { error } = await supabase
           .from('tracks')
           .update(trackData)
@@ -193,12 +210,41 @@ export function TracksManager() {
         if (error) throw error;
         toast.success('Track aktualisiert');
       } else {
+        // Create new tracks (single or multiple)
+        const totalFiles = audioFiles.length;
+        
+        if (totalFiles === 0) {
+          toast.error('Bitte mindestens eine Audio-Datei auswählen');
+          return;
+        }
+
+        setUploadProgress({ current: 0, total: totalFiles });
+
+        const tracksToInsert = [];
+        
+        for (let i = 0; i < audioFiles.length; i++) {
+          const file = audioFiles[i];
+          setUploadProgress({ current: i + 1, total: totalFiles });
+          
+          const uploaded = await uploadSingleTrack(file, coverUrl);
+          
+          tracksToInsert.push({
+            title: totalFiles === 1 ? formData.title : uploaded.title,
+            artist: formData.artist,
+            album: formData.album || null,
+            genre: formData.genre || null,
+            duration: uploaded.duration,
+            audio_url: uploaded.audioUrl,
+            cover_url: coverUrl,
+          });
+        }
+
         const { error } = await supabase
           .from('tracks')
-          .insert(trackData);
+          .insert(tracksToInsert);
         
         if (error) throw error;
-        toast.success('Track erstellt');
+        toast.success(`${tracksToInsert.length} Track${tracksToInsert.length > 1 ? 's' : ''} erstellt`);
       }
 
       setShowModal(false);
@@ -209,6 +255,7 @@ export function TracksManager() {
       toast.error(err.message || 'Ein Fehler ist aufgetreten');
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -411,17 +458,19 @@ export function TracksManager() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Titel *</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Song-Titel"
-                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none"
-                    required
-                  />
-                </div>
+                {(editingTrack || audioFiles.length <= 1) && (
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Titel *</label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Song-Titel"
+                      className="w-full px-4 py-3 rounded-xl bg-background/50 border border-primary/20 focus:border-primary/50 focus:outline-none"
+                      required={!!editingTrack || audioFiles.length <= 1}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Künstler *</label>
@@ -458,24 +507,52 @@ export function TracksManager() {
                   </div>
                 </div>
 
-                {/* Audio Upload */}
+                {/* Audio Upload - Multiple files allowed */}
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">
-                    Audio-Datei {!editingTrack && '*'}
+                    Audio-Datei(en) {!editingTrack && '*'}
+                    {!editingTrack && <span className="text-xs ml-2 text-primary">(Mehrfachauswahl möglich)</span>}
                   </label>
                   <label className="flex items-center gap-3 px-4 py-4 rounded-xl bg-background/50 border border-primary/20 border-dashed cursor-pointer hover:border-primary/50 transition-colors">
                     <Upload size={20} className="text-muted-foreground flex-shrink-0" />
                     <span className="text-sm text-muted-foreground truncate">
-                      {audioFile ? audioFile.name : 'MP3 oder WAV auswählen'}
+                      {audioFiles.length > 0 
+                        ? audioFiles.length === 1 
+                          ? audioFiles[0].name 
+                          : `${audioFiles.length} Dateien ausgewählt`
+                        : 'MP3 oder WAV auswählen (Mehrfachauswahl mit Strg/Cmd)'
+                      }
                     </span>
                     <input
                       type="file"
                       accept="audio/*"
-                      onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                      multiple={!editingTrack}
+                      onChange={(e) => setAudioFiles(e.target.files ? Array.from(e.target.files) : [])}
                       className="hidden"
-                      required={!editingTrack}
+                      required={!editingTrack && audioFiles.length === 0}
                     />
                   </label>
+                  {audioFiles.length > 1 && (
+                    <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                      {audioFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs bg-muted/30 rounded px-2 py-1">
+                          <span className="truncate flex-1">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAudioFiles(prev => prev.filter((_, i) => i !== idx))}
+                            className="ml-2 text-destructive hover:text-destructive/80"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {audioFiles.length > 1 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Titel werden automatisch aus Dateinamen übernommen
+                    </p>
+                  )}
                 </div>
 
                 {/* Cover Upload */}
@@ -511,7 +588,10 @@ export function TracksManager() {
                     {isUploading ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        Hochladen...
+                        {uploadProgress 
+                          ? `Uploading ${uploadProgress.current}/${uploadProgress.total}...`
+                          : 'Hochladen...'
+                        }
                       </>
                     ) : (
                       <>
