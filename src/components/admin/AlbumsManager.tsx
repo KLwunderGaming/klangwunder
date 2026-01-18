@@ -51,7 +51,15 @@ export function AlbumsManager() {
   });
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number;
+    total: number;
+    currentFileName: string;
+    bytesUploaded: number;
+    totalBytes: number;
+    startTime: number;
+    currentFileSize: number;
+  } | null>(null);
 
   // Get albums from tracks
   const albums: Album[] = tracks.reduce((acc: Album[], track) => {
@@ -219,14 +227,25 @@ export function AlbumsManager() {
 
         // Upload any new tracks
         if (audioFiles.length > 0) {
-          setUploadProgress({ current: 0, total: audioFiles.length });
+          const totalBytes = audioFiles.reduce((sum, f) => sum + f.size, 0);
+          let bytesUploaded = 0;
+          const startTime = Date.now();
           const tracksToInsert = [];
           
           for (let i = 0; i < audioFiles.length; i++) {
             const file = audioFiles[i];
-            setUploadProgress({ current: i + 1, total: audioFiles.length });
+            setUploadProgress({ 
+              current: i + 1, 
+              total: audioFiles.length,
+              currentFileName: file.name,
+              bytesUploaded,
+              totalBytes,
+              startTime,
+              currentFileSize: file.size
+            });
             
             const uploaded = await uploadSingleTrack(file, coverUrl);
+            bytesUploaded += file.size;
             
             tracksToInsert.push({
               title: uploaded.title,
@@ -254,14 +273,25 @@ export function AlbumsManager() {
           return;
         }
 
-        setUploadProgress({ current: 0, total: audioFiles.length });
+        const totalBytes = audioFiles.reduce((sum, f) => sum + f.size, 0);
+        let bytesUploaded = 0;
+        const startTime = Date.now();
         const tracksToInsert = [];
         
         for (let i = 0; i < audioFiles.length; i++) {
           const file = audioFiles[i];
-          setUploadProgress({ current: i + 1, total: audioFiles.length });
+          setUploadProgress({ 
+            current: i + 1, 
+            total: audioFiles.length,
+            currentFileName: file.name,
+            bytesUploaded,
+            totalBytes,
+            startTime,
+            currentFileSize: file.size
+          });
           
           const uploaded = await uploadSingleTrack(file, coverUrl);
+          bytesUploaded += file.size;
           
           tracksToInsert.push({
             title: uploaded.title,
@@ -344,6 +374,44 @@ export function AlbumsManager() {
 
   const getTotalDuration = (tracks: Track[]) => {
     return tracks.reduce((sum, t) => sum + t.duration, 0);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
+  };
+
+  const getUploadStats = () => {
+    if (!uploadProgress) return null;
+    
+    const elapsed = (Date.now() - uploadProgress.startTime) / 1000;
+    const bytesPerSecond = elapsed > 0 ? uploadProgress.bytesUploaded / elapsed : 0;
+    const remainingBytes = uploadProgress.totalBytes - uploadProgress.bytesUploaded;
+    const estimatedSecondsRemaining = bytesPerSecond > 0 ? remainingBytes / bytesPerSecond : 0;
+    const percentComplete = uploadProgress.totalBytes > 0 
+      ? Math.round((uploadProgress.bytesUploaded / uploadProgress.totalBytes) * 100) 
+      : 0;
+    
+    return {
+      elapsed,
+      bytesPerSecond,
+      estimatedSecondsRemaining,
+      percentComplete,
+      uploadedSize: formatFileSize(uploadProgress.bytesUploaded),
+      totalSize: formatFileSize(uploadProgress.totalBytes),
+      speed: formatFileSize(bytesPerSecond) + '/s',
+      eta: formatTime(estimatedSecondsRemaining)
+    };
   };
 
   if (isLoading) {
@@ -644,20 +712,57 @@ export function AlbumsManager() {
                 </div>
 
                 {/* Upload Progress */}
-                {uploadProgress && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Hochladen...</span>
-                      <span className="text-primary">{uploadProgress.current} / {uploadProgress.total}</span>
+                {uploadProgress && (() => {
+                  const stats = getUploadStats();
+                  return (
+                    <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                      {/* Current file */}
+                      <div className="flex items-center gap-2">
+                        <Loader2 size={16} className="animate-spin text-primary" />
+                        <span className="text-sm font-medium truncate flex-1">
+                          {uploadProgress.currentFileName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(uploadProgress.currentFileSize)}
+                        </span>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="space-y-1">
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-gradient-to-r from-primary to-accent"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${stats?.percentComplete || 0}%` }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{stats?.uploadedSize} / {stats?.totalSize}</span>
+                          <span>{stats?.percentComplete}%</span>
+                        </div>
+                      </div>
+                      
+                      {/* Stats row */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="p-2 rounded-lg bg-background/50">
+                          <p className="text-xs text-muted-foreground">Track</p>
+                          <p className="text-sm font-medium text-primary">
+                            {uploadProgress.current}/{uploadProgress.total}
+                          </p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-background/50">
+                          <p className="text-xs text-muted-foreground">Geschwindigkeit</p>
+                          <p className="text-sm font-medium text-primary">{stats?.speed}</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-background/50">
+                          <p className="text-xs text-muted-foreground">Restzeit</p>
+                          <p className="text-sm font-medium text-primary">~{stats?.eta}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-300"
-                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <motion.button
                   type="submit"
