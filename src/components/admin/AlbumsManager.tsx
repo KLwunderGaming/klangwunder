@@ -118,7 +118,10 @@ export function AlbumsManager() {
     
     const { error: audioError } = await supabase.storage
       .from('audio')
-      .upload(audioPath, audioFile);
+      .upload(audioPath, audioFile, {
+        cacheControl: '3600',
+        upsert: false
+      });
     
     if (audioError) throw new Error('Audio-Upload fehlgeschlagen: ' + audioError.message);
     
@@ -126,16 +129,30 @@ export function AlbumsManager() {
       .from('audio')
       .getPublicUrl(audioPath);
 
-    // Get duration from audio file
+    // Get duration from audio file with timeout to prevent hanging
     let duration = 0;
-    const audio = new Audio(URL.createObjectURL(audioFile));
-    await new Promise((resolve) => {
-      audio.onloadedmetadata = () => {
-        duration = Math.round(audio.duration);
-        resolve(null);
-      };
-      audio.onerror = () => resolve(null);
-    });
+    const objectUrl = URL.createObjectURL(audioFile);
+    try {
+      const audio = new Audio(objectUrl);
+      duration = await new Promise<number>((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('Duration detection timeout for:', audioFile.name);
+          resolve(0);
+        }, 5000); // 5 second timeout
+        
+        audio.onloadedmetadata = () => {
+          clearTimeout(timeout);
+          resolve(Math.round(audio.duration));
+        };
+        audio.onerror = () => {
+          clearTimeout(timeout);
+          console.warn('Error loading audio metadata for:', audioFile.name);
+          resolve(0);
+        };
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
 
     // Extract title from filename (remove extension and track numbers)
     let title = audioFile.name.replace(/\.[^/.]+$/, '');
