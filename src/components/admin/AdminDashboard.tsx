@@ -11,7 +11,8 @@ import {
   X,
   FileText,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  Disc3
 } from 'lucide-react';
 import klangwunderIcon from '@/assets/klangwunder-icon.png';
 import { TracksManager } from './TracksManager';
@@ -20,12 +21,13 @@ import { SettingsManager } from './SettingsManager';
 import { ContentManager } from './ContentManager';
 import { DashboardOverview } from './DashboardOverview';
 import { EventsManager } from './EventsManager';
+import { AlbumsManager } from './AlbumsManager';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = 'dashboard' | 'content' | 'tracks' | 'playlists' | 'events' | 'settings';
+type Tab = 'dashboard' | 'content' | 'tracks' | 'albums' | 'playlists' | 'events' | 'settings';
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -40,6 +42,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { id: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'content' as Tab, label: 'Seiten & Inhalte', icon: FileText },
     { id: 'tracks' as Tab, label: 'Tracks', icon: Music },
+    { id: 'albums' as Tab, label: 'Alben', icon: Disc3 },
     { id: 'playlists' as Tab, label: 'Playlists', icon: ListMusic },
     { id: 'events' as Tab, label: 'Events', icon: CalendarDays },
     { id: 'settings' as Tab, label: 'Einstellungen', icon: Settings },
@@ -146,7 +149,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <p className="text-muted-foreground font-body">
               {activeTab === 'dashboard' && 'Übersicht über deine Webseite'}
               {activeTab === 'content' && 'Bearbeite Seiten und Texte'}
-              {activeTab === 'tracks' && 'Verwalte deine Musiksammlung'}
+              {activeTab === 'tracks' && 'Verwalte einzelne Tracks und Singles'}
+              {activeTab === 'albums' && 'Lade komplette Alben mit mehreren Tracks hoch'}
               {activeTab === 'playlists' && 'Erstelle und bearbeite Playlists'}
               {activeTab === 'events' && 'Verwalte deine Konzerte und Events'}
               {activeTab === 'settings' && 'Passe die Webseite an'}
@@ -163,6 +167,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             {activeTab === 'dashboard' && <DashboardOverview onNavigate={handleNavigate} />}
             {activeTab === 'content' && <ContentManager />}
             {activeTab === 'tracks' && <TracksManager />}
+            {activeTab === 'albums' && <AlbumsManager />}
             {activeTab === 'playlists' && <PlaylistsManager />}
             {activeTab === 'events' && <EventsManager />}
             {activeTab === 'settings' && <SettingsManager />}
