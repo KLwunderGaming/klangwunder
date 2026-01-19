@@ -220,7 +220,6 @@ export function TracksManager() {
           .eq('id', editingTrack.id);
         
         if (error) throw error;
-        toast.success('Track aktualisiert');
       } else {
         // Create new tracks (single or multiple)
         const totalFiles = audioFiles.length;
@@ -256,12 +255,12 @@ export function TracksManager() {
           .insert(tracksToInsert);
         
         if (error) throw error;
-        toast.success(`${tracksToInsert.length} Track${tracksToInsert.length > 1 ? 's' : ''} erstellt`);
       }
 
-      setShowModal(false);
+      await fetchTracks();
       resetForm();
-      fetchTracks();
+      setShowModal(false);
+      toast.success(editingTrack ? 'Track aktualisiert' : `${audioFiles.length} Track${audioFiles.length > 1 ? 's' : ''} erstellt`);
     } catch (err: any) {
       console.error('Upload error:', err);
       toast.error(err.message || 'Ein Fehler ist aufgetreten');
