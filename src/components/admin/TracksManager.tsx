@@ -135,15 +135,27 @@ export function TracksManager() {
       .from('audio')
       .getPublicUrl(audioPath);
 
-    // Get duration from audio file
+    // Get duration from audio file with timeout
     let duration = 0;
-    const audio = new Audio(URL.createObjectURL(audioFile));
-    await new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(audioFile);
+    const audio = new Audio(objectUrl);
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+        resolve();
+      }, 5000);
+      
       audio.onloadedmetadata = () => {
+        clearTimeout(timeout);
         duration = Math.round(audio.duration);
-        resolve(null);
+        URL.revokeObjectURL(objectUrl);
+        resolve();
       };
-      audio.onerror = () => resolve(null);
+      audio.onerror = () => {
+        clearTimeout(timeout);
+        URL.revokeObjectURL(objectUrl);
+        resolve();
+      };
     });
 
     // Extract title from filename (remove extension)
