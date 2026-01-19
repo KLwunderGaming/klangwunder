@@ -171,6 +171,13 @@ export function TracksManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate before setting loading state
+    if (!editingTrack && audioFiles.length === 0) {
+      toast.error('Bitte mindestens eine Audio-Datei auswählen');
+      return;
+    }
+    
     setIsUploading(true);
 
     try {
@@ -223,11 +230,6 @@ export function TracksManager() {
       } else {
         // Create new tracks (single or multiple)
         const totalFiles = audioFiles.length;
-        
-        if (totalFiles === 0) {
-          toast.error('Bitte mindestens eine Audio-Datei auswählen');
-          return;
-        }
 
         setUploadProgress({ current: 0, total: totalFiles });
 
