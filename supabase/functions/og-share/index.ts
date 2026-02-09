@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const trackId = url.searchParams.get("track");
-  const siteUrl = url.searchParams.get("site") || "https://klangwunder.lovable.app";
+  const siteUrl = url.searchParams.get("site") || "https://music.klwunder.de";
 
   if (!trackId) {
     return new Response("Missing track parameter", { status: 400 });
