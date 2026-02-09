@@ -11,8 +11,10 @@ interface ShareButtonProps {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
+const SITE_URL = 'https://music.klwunder.de';
+
 function getShareUrl(trackId: string) {
-  return `${SUPABASE_URL}/functions/v1/og-share?track=${trackId}&site=${encodeURIComponent(window.location.origin)}`;
+  return `${SUPABASE_URL}/functions/v1/og-share?track=${trackId}&site=${encodeURIComponent(SITE_URL)}`;
 }
 
 export function ShareButton({ track, size = 16 }: ShareButtonProps) {
