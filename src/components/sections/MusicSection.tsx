@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Play, Pause, Clock, Music2, Disc3, ChevronRight } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
+import { ShareButton } from '@/components/ShareButton';
 import type { Track } from '@/types/music';
 import { useState, useMemo } from 'react';
 
@@ -66,6 +67,7 @@ function TrackCard({ track, index, compact = false }: TrackCardProps) {
         <span className="text-xs text-muted-foreground">
           {formatDuration(track.duration)}
         </span>
+        <ShareButton track={track} size={14} />
       </motion.div>
     );
   }
@@ -129,6 +131,7 @@ function TrackCard({ track, index, compact = false }: TrackCardProps) {
             </span>
           )}
         </div>
+        <ShareButton track={track} />
       </div>
 
       {/* Playing indicator */}
