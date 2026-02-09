@@ -201,6 +201,8 @@ export function useAudioPlayer() {
     };
   }, [isPlaying, updateAnalyser]);
 
+
+
   const playTrack = useCallback(async (track: Track) => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -239,6 +241,25 @@ export function useAudioPlayer() {
     try {
       await audioRef.current.play();
       setIsPlaying(true);
+      
+      // Update Media Session for background playback on mobile
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title,
+          artist: track.artist,
+          album: track.album || '',
+          artwork: track.cover_url
+            ? [
+                { src: track.cover_url, sizes: '96x96', type: 'image/png' },
+                { src: track.cover_url, sizes: '128x128', type: 'image/png' },
+                { src: track.cover_url, sizes: '192x192', type: 'image/png' },
+                { src: track.cover_url, sizes: '256x256', type: 'image/png' },
+                { src: track.cover_url, sizes: '384x384', type: 'image/png' },
+                { src: track.cover_url, sizes: '512x512', type: 'image/png' },
+              ]
+            : [],
+        });
+      }
     } catch (error) {
       console.log('Playback error:', error);
     }
@@ -344,6 +365,32 @@ export function useAudioPlayer() {
       playTrack(queue[queue.length - 1]);
     }
   }, [currentTrack, currentTime, queue, repeatMode, playTrack]);
+
+  // Media Session API for lock screen / background playback controls
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.current?.play();
+      setIsPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      playPrevious();
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      playNext();
+    });
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (details.seekTime !== undefined && audioRef.current) {
+        audioRef.current.currentTime = details.seekTime;
+        setCurrentTime(details.seekTime);
+      }
+    });
+  }, [playNext, playPrevious]);
 
   const setEqBandGain = useCallback((index: number, gain: number) => {
     setEqBands(prev => {

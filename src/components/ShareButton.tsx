@@ -36,7 +36,34 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
     }
   };
 
+  const handleInstagramStory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Instagram Stories can be shared via the native Web Share API on mobile
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareText,
+          text: `${shareText}\n${shareUrl}`,
+          url: shareUrl,
+        });
+      } catch {
+        // User cancelled or not supported
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link kopiert – füge ihn in deine Instagram Story ein!');
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link kopiert – füge ihn in deine Instagram Story ein!');
+    }
+  };
+
   const shareOptions = [
+    {
+      name: 'Instagram Story',
+      icon: '📸',
+      action: handleInstagramStory,
+      label: 'In Story teilen',
+    },
     {
       name: 'WhatsApp',
       icon: '💬',
