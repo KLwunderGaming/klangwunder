@@ -3,6 +3,7 @@ import { Share2, Copy, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import type { Track } from '@/types/music';
+import { slugify } from '@/lib/slugify';
 
 interface ShareButtonProps {
   track: Track;
@@ -12,12 +13,12 @@ interface ShareButtonProps {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SITE_URL = 'https://music.klwunder.de';
 
-// Clean URL for display/sharing
-function getCleanShareUrl(trackId: string) {
-  return `${SITE_URL}/share/${trackId}`;
+// Clean URL for display/sharing — e.g. music.klwunder.de/track/mein-song
+function getCleanShareUrl(track: Track) {
+  return `${SITE_URL}/track/${slugify(track.title)}`;
 }
 
-// Edge function URL for OG metadata (used internally for platforms that need it)
+// Edge function URL for OG metadata (used for platforms that fetch previews)
 function getOgShareUrl(trackId: string) {
   return `${SUPABASE_URL}/functions/v1/og-share?track=${trackId}&site=${encodeURIComponent(SITE_URL)}`;
 }
@@ -26,7 +27,7 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = getCleanShareUrl(track.id);
+  const shareUrl = getCleanShareUrl(track);
   const ogUrl = getOgShareUrl(track.id);
   const shareText = `🎵 ${track.title} von ${track.artist} – Jetzt anhören!`;
 
