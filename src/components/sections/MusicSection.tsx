@@ -3,6 +3,7 @@ import { Play, Pause, Clock, Music2, Disc3, ChevronRight } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
 import { ShareButton } from '@/components/ShareButton';
+import { slugify } from '@/lib/slugify';
 import type { Track } from '@/types/music';
 import { useState, useMemo } from 'react';
 
@@ -36,6 +37,8 @@ function TrackCard({ track, index, compact = false }: TrackCardProps) {
       setQueue(tracks);
       playTrack(track);
     }
+    // Update browser URL to show clean track path
+    window.history.replaceState(null, '', `/track/${slugify(track.title)}`);
   };
 
   if (compact) {
@@ -247,6 +250,7 @@ export function MusicSection() {
     if (album.tracks.length > 0) {
       playTrack(album.tracks[0]);
     }
+    window.history.replaceState(null, '', `/album/${slugify(album.name)}`);
   };
 
   // Don't render if no tracks
@@ -321,7 +325,7 @@ export function MusicSection() {
             {/* Back button & Album header */}
             <div className="flex items-start gap-6">
               <motion.button
-                onClick={() => setSelectedAlbum(null)}
+                onClick={() => { setSelectedAlbum(null); window.history.replaceState(null, '', '/'); }}
                 className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground"
                 whileHover={{ x: -3 }}
               >
@@ -372,7 +376,7 @@ export function MusicSection() {
                   key={album.name} 
                   album={album} 
                   index={index}
-                  onSelect={() => setSelectedAlbum(album)}
+                  onSelect={() => { setSelectedAlbum(album); window.history.replaceState(null, '', `/album/${slugify(album.name)}`); }}
                 />
               ))}
             </div>
