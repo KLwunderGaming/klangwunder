@@ -34,6 +34,12 @@ Deno.serve(async (req) => {
     return new Response("Track not found", { status: 404 });
   }
 
+  // Slugify for clean URLs
+  const slug = track.title
+    .toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
   const title = `${track.title} – ${track.artist}`;
   const description = track.album
     ? `🎵 ${track.title} vom Album "${track.album}" • Jetzt anhören auf Klangwunder`
@@ -43,6 +49,7 @@ Deno.serve(async (req) => {
   const mins = Math.floor(duration / 60);
   const secs = duration % 60;
   const durationStr = `${mins}:${secs.toString().padStart(2, "0")}`;
+  const cleanUrl = `${siteUrl}/track/${slug}`;
 
   const html = `<!DOCTYPE html>
 <html lang="de">
@@ -60,7 +67,7 @@ Deno.serve(async (req) => {
   <meta property="og:image:width" content="512">
   <meta property="og:image:height" content="512">
   <meta property="og:site_name" content="Klangwunder">
-  <meta property="og:url" content="${siteUrl}/share/${trackId}">
+  <meta property="og:url" content="${cleanUrl}">
   <meta property="music:duration" content="${duration}">
   ${track.album ? `<meta property="music:album" content="${track.album}">` : ""}
   <meta property="music:musician" content="${track.artist}">
@@ -92,13 +99,13 @@ Deno.serve(async (req) => {
     <div class="title">${track.title}</div>
     <div class="artist">${track.artist}</div>
     <div class="meta">${track.album ? `${track.album} • ` : ""}${durationStr}</div>
-    <a class="btn" href="${siteUrl}/#music">🎧 Jetzt anhören</a>
+    <a class="btn" href="${cleanUrl}">🎧 Jetzt anhören</a>
   </div>
   <script>
     // Auto-redirect browsers (not bots) to main site
     const bots = /bot|crawl|spider|preview|embed|discord|telegram|slack|whatsapp|facebook|twitter|linkedin/i;
     if (!bots.test(navigator.userAgent)) {
-      window.location.href = "${siteUrl}/#music";
+      window.location.href = "${cleanUrl}";
     }
   </script>
 </body>

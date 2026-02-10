@@ -1,29 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { slugify } from '@/lib/slugify';
 
-export default function ShareRedirect() {
-  const { trackId } = useParams<{ trackId: string }>();
+export default function AlbumRedirect() {
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!trackId) {
+    if (!slug) {
       navigate('/#music', { replace: true });
       return;
     }
 
     const load = async () => {
       try {
-        const { data } = await supabase
-          .from('tracks')
-          .select('title, artist')
-          .eq('id', trackId)
-          .single();
-        if (data) {
-          document.title = `${data.title} – ${data.artist} | Klangwunder`;
+        // Find first track of the album to auto-play
+        const { data: tracks } = await supabase.from('tracks').select('id, title, artist, album');
+        const albumTrack = tracks?.find(t => t.album && slugify(t.album) === slug);
+        if (albumTrack) {
+          document.title = `${albumTrack.album} – ${albumTrack.artist} | Klangwunder`;
+          navigate(`/?play=${albumTrack.id}#music`, { replace: true });
+        } else {
+          navigate('/#music', { replace: true });
         }
-        navigate(`/?play=${trackId}#music`, { replace: true });
       } catch {
         navigate('/#music', { replace: true });
       } finally {
@@ -31,7 +32,7 @@ export default function ShareRedirect() {
       }
     };
     load();
-  }, [trackId, navigate]);
+  }, [slug, navigate]);
 
   if (!loading) return null;
 
