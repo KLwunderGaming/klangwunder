@@ -1,12 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Pause, Clock, ArrowLeft, Disc3, Music2 } from 'lucide-react';
+import { Play, Pause, Clock, ArrowLeft, Disc3, Music2, Calendar, Share2, ExternalLink } from 'lucide-react';
 import { AudioProvider, useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
 import { slugify } from '@/lib/slugify';
 import { ShareButton } from '@/components/ShareButton';
 import { MusicPlayer } from '@/components/player/MusicPlayer';
 import { Scene3DBackground } from '@/components/3d/Scene3DBackground';
+import { Footer } from '@/components/Footer';
 import type { Track } from '@/types/music';
 
 function formatDuration(seconds: number): string {
@@ -15,12 +16,242 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function AlbumHero({ albumName, artist, coverUrl, trackCount, totalDuration, onPlay }: {
+  albumName: string;
+  artist: string;
+  coverUrl: string | null;
+  trackCount: number;
+  totalDuration: number;
+  onPlay: () => void;
+}) {
+  return (
+    <section className="relative min-h-[70vh] flex items-end pb-16">
+      {/* Background blur from cover */}
+      {coverUrl && (
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={coverUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+        </div>
+      )}
+
+      <div className="relative z-10 section-container w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12"
+        >
+          {/* Album Cover */}
+          <motion.div
+            className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-2xl overflow-hidden flex-shrink-0 glow-primary"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ scale: 1.02, rotate: 1 }}
+          >
+            {coverUrl ? (
+              <img src={coverUrl} alt={albumName} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+                <Disc3 className="w-24 h-24 text-foreground/20" />
+              </div>
+            )}
+          </motion.div>
+
+          {/* Album Info */}
+          <motion.div
+            className="text-center md:text-left flex-1"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            <span className="inline-block text-xs uppercase tracking-[0.3em] text-accent font-semibold mb-3">
+              Album
+            </span>
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl text-gradient mb-4 leading-tight">
+              {albumName}
+            </h1>
+            <p className="text-xl text-foreground/80 mb-2">{artist}</p>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground justify-center md:justify-start mb-8">
+              <span className="flex items-center gap-1.5">
+                <Music2 size={14} />
+                {trackCount} Songs
+              </span>
+              <span className="text-border">•</span>
+              <span className="flex items-center gap-1.5">
+                <Clock size={14} />
+                {formatDuration(totalDuration)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 justify-center md:justify-start">
+              <motion.button
+                onClick={onPlay}
+                className="btn-primary px-10 py-4 rounded-full flex items-center gap-3 text-lg font-medium"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Play size={24} className="ml-0.5" />
+                Jetzt abspielen
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function TracklistSection({ tracks, currentTrack, isPlaying, onPlayTrack }: {
+  tracks: Track[];
+  currentTrack: Track | null;
+  isPlaying: boolean;
+  onPlayTrack: (track: Track) => void;
+}) {
+  return (
+    <section className="py-16">
+      <div className="section-container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="font-display text-3xl text-gradient mb-8">Tracklist</h2>
+
+          {/* Header row */}
+          <div className="flex items-center gap-4 px-4 pb-3 border-b border-border/50 text-xs uppercase tracking-widest text-muted-foreground">
+            <span className="w-8 text-center">#</span>
+            <span className="flex-1">Titel</span>
+            <span className="w-16 text-right">
+              <Clock size={14} className="inline" />
+            </span>
+            <span className="w-10" />
+          </div>
+
+          {/* Track rows */}
+          <div className="mt-2">
+            {tracks.map((track, index) => {
+              const isCurrent = currentTrack?.id === track.id;
+              return (
+                <motion.div
+                  key={track.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.03 }}
+                  className={`group flex items-center gap-4 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-primary/10 ${
+                    isCurrent ? 'bg-primary/15' : ''
+                  }`}
+                  onClick={() => onPlayTrack(track)}
+                >
+                  {/* Track number / play icon */}
+                  <span className="w-8 text-center text-sm text-muted-foreground">
+                    <span className="group-hover:hidden">
+                      {isCurrent && isPlaying ? (
+                        <span className="flex items-center justify-center gap-0.5">
+                          <span className="w-0.5 h-3 bg-primary rounded-full animate-pulse" />
+                          <span className="w-0.5 h-4 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
+                          <span className="w-0.5 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+                        </span>
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
+                    <span className="hidden group-hover:block">
+                      {isCurrent && isPlaying ? (
+                        <Pause size={16} className="text-primary mx-auto" />
+                      ) : (
+                        <Play size={16} className="text-primary mx-auto" />
+                      )}
+                    </span>
+                  </span>
+
+                  {/* Cover thumbnail */}
+                  {track.cover_url && (
+                    <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                      <img src={track.cover_url} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  {/* Title & Artist */}
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      to={`/track/${slugify(track.title)}`}
+                      className={`text-sm truncate block transition-colors hover:text-primary ${
+                        isCurrent ? 'text-primary font-medium' : 'text-foreground'
+                      }`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {track.title}
+                    </Link>
+                    <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                  </div>
+
+                  {/* Duration */}
+                  <span className="w-16 text-right text-xs text-muted-foreground">
+                    {formatDuration(track.duration)}
+                  </span>
+
+                  {/* Share */}
+                  <span className="w-10 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ShareButton track={track} size={14} />
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function AlbumInfoSection({ albumName, artist, trackCount, totalDuration }: {
+  albumName: string;
+  artist: string;
+  trackCount: number;
+  totalDuration: number;
+}) {
+  return (
+    <section className="py-16 border-t border-border/30">
+      <div className="section-container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
+          <div className="glass rounded-2xl p-8 text-center">
+            <Music2 className="w-8 h-8 text-accent mx-auto mb-3" />
+            <p className="text-3xl font-bold text-foreground mb-1">{trackCount}</p>
+            <p className="text-sm text-muted-foreground">Songs</p>
+          </div>
+          <div className="glass rounded-2xl p-8 text-center">
+            <Clock className="w-8 h-8 text-accent mx-auto mb-3" />
+            <p className="text-3xl font-bold text-foreground mb-1">{formatDuration(totalDuration)}</p>
+            <p className="text-sm text-muted-foreground">Gesamtlänge</p>
+          </div>
+          <div className="glass rounded-2xl p-8 text-center">
+            <Disc3 className="w-8 h-8 text-accent mx-auto mb-3" />
+            <p className="text-3xl font-bold text-foreground mb-1">{artist}</p>
+            <p className="text-sm text-muted-foreground">Künstler</p>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 function AlbumPageContent() {
   const { slug } = useParams<{ slug: string }>();
   const { tracks, isLoading } = useTracks();
   const { currentTrack, isPlaying, playTrack, togglePlay, setQueue, analyserData } = useAudio();
 
-  // Find all tracks belonging to this album
   const albumTracks = tracks.filter(t =>
     t.album && (
       slugify(t.album) === slug
@@ -80,117 +311,49 @@ function AlbumPageContent() {
     <div className="min-h-screen bg-background">
       <Scene3DBackground audioData={analyserData} />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Top Bar */}
-        <div className="p-4 sm:p-6">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span className="text-sm">Zurück</span>
-          </Link>
-        </div>
-
-        {/* Album Header */}
-        <div className="px-4 pb-32">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto"
-          >
-            <div className="glass rounded-3xl p-6 sm:p-10">
-              <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-                {/* Cover */}
-                <motion.div
-                  className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  {coverUrl ? (
-                    <img src={coverUrl} alt={albumName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
-                      <Disc3 className="w-20 h-20 text-foreground/30" />
-                    </div>
-                  )}
-                </motion.div>
-
-                {/* Album Info */}
-                <div className="text-center sm:text-left flex-1">
-                  <p className="text-xs uppercase tracking-widest text-primary mb-2">Album</p>
-                  <h1 className="font-display text-3xl sm:text-4xl text-gradient mb-2 leading-tight">
-                    {albumName}
-                  </h1>
-                  <p className="text-lg text-muted-foreground mb-1">{artist}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {albumTracks.length} Songs • {formatDuration(totalDuration)}
-                  </p>
-
-                  <motion.button
-                    onClick={handlePlayAlbum}
-                    className="mt-6 btn-primary px-8 py-3 rounded-full flex items-center gap-2 text-lg mx-auto sm:mx-0"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <Play size={22} className="ml-0.5" />
-                    Album abspielen
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-
-            {/* Tracklist */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="mt-8 glass rounded-2xl p-4 sm:p-6"
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Nav bar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 p-4 sm:p-6">
+          <div className="section-container flex items-center justify-between">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors glass-strong rounded-full px-4 py-2"
             >
-              {albumTracks.map((track, index) => {
-                const isCurrent = currentTrack?.id === track.id;
-                return (
-                  <motion.div
-                    key={track.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-primary/10 ${
-                      isCurrent ? 'bg-primary/20' : ''
-                    }`}
-                    onClick={() => handlePlayTrack(track)}
-                  >
-                    <span className="w-6 text-center text-sm text-muted-foreground group-hover:hidden">
-                      {index + 1}
-                    </span>
-                    <span className="w-6 text-center hidden group-hover:block">
-                      {isCurrent && isPlaying ? (
-                        <Pause size={16} className="text-primary mx-auto" />
-                      ) : (
-                        <Play size={16} className="text-primary mx-auto" />
-                      )}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to={`/track/${slugify(track.title)}`}
-                        className={`text-sm truncate block hover:text-primary transition-colors ${
-                          isCurrent ? 'text-primary font-medium' : ''
-                        }`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {track.title}
-                      </Link>
-                    </div>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock size={12} />
-                      {formatDuration(track.duration)}
-                    </span>
-                    <ShareButton track={track} size={14} />
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </motion.div>
+              <ArrowLeft size={18} />
+              <span className="text-sm font-medium">Zurück</span>
+            </Link>
+          </div>
+        </nav>
+
+        {/* Hero */}
+        <AlbumHero
+          albumName={albumName}
+          artist={artist}
+          coverUrl={coverUrl}
+          trackCount={albumTracks.length}
+          totalDuration={totalDuration}
+          onPlay={handlePlayAlbum}
+        />
+
+        {/* Tracklist */}
+        <TracklistSection
+          tracks={albumTracks}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onPlayTrack={handlePlayTrack}
+        />
+
+        {/* Info Cards */}
+        <AlbumInfoSection
+          albumName={albumName}
+          artist={artist}
+          trackCount={albumTracks.length}
+          totalDuration={totalDuration}
+        />
+
+        {/* Footer */}
+        <div className="pb-32">
+          <Footer />
         </div>
       </div>
 
