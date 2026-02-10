@@ -10,23 +10,24 @@ export default function AlbumRedirect() {
 
   useEffect(() => {
     if (!slug) {
-      navigate('/#music', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
     const load = async () => {
       try {
-        // Find first track of the album to auto-play
         const { data: tracks } = await supabase.from('tracks').select('id, title, artist, album');
-        const albumTrack = tracks?.find(t => t.album && slugify(t.album) === slug);
+        const albumTrack = tracks?.find(t => t.album && slugify(t.album) === slug)
+          || tracks?.find(t => t.album && slug.includes(slugify(t.album)))
+          || tracks?.find(t => t.album && slugify(t.album).includes(slug));
         if (albumTrack) {
           document.title = `${albumTrack.album} – ${albumTrack.artist} | Klangwunder`;
-          navigate(`/?play=${albumTrack.id}#music`, { replace: true });
+          navigate(`/?play=${albumTrack.id}`, { replace: true });
         } else {
-          navigate('/#music', { replace: true });
+          navigate('/', { replace: true });
         }
       } catch {
-        navigate('/#music', { replace: true });
+        navigate('/', { replace: true });
       } finally {
         setLoading(false);
       }
