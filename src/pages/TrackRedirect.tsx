@@ -36,8 +36,6 @@ export default function TrackRedirect() {
     load();
   }, [slug, navigate]);
 
-  if (!loading) return null;
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
