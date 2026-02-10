@@ -34,7 +34,7 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
   const copyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(ogUrl);
       setCopied(true);
       toast.success('Link kopiert!');
       setTimeout(() => setCopied(false), 2000);
@@ -50,8 +50,8 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
       try {
         await navigator.share({
           title: shareText,
-          text: `${shareText}\n${shareUrl}`,
-          url: shareUrl,
+          text: `${shareText}\n${ogUrl}`,
+          url: ogUrl,
         });
       } catch {
         // User cancelled or not supported
