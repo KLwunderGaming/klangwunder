@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import TrackPage from "./pages/TrackPage";
+import AlbumPage from "./pages/AlbumPage";
 
 const queryClient = new QueryClient();
 
@@ -18,8 +20,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/track/:slug" element={<Index />} />
-          <Route path="/album/:slug" element={<Index />} />
+          <Route path="/track/:slug" element={<TrackPage />} />
+          <Route path="/album/:slug" element={<AlbumPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
