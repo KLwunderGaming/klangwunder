@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Play, Pause, Clock, ArrowLeft, Disc3, Music2, Calendar, Share2, ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Pause, Clock, ArrowLeft, Disc3, Music2, Share2, Copy, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { AudioProvider, useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
 import { slugify } from '@/lib/slugify';
@@ -10,19 +12,110 @@ import { Scene3DBackground } from '@/components/3d/Scene3DBackground';
 import { Footer } from '@/components/Footer';
 import type { Track } from '@/types/music';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SITE_URL = 'https://music.klwunder.de';
+
+function AlbumShareButton({ albumSlug, albumName, artist }: { albumSlug: string; albumName: string; artist: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = `${SITE_URL}/album/${albumSlug}`;
+  const ogUrl = `${SUPABASE_URL}/functions/v1/og-share?album=${encodeURIComponent(albumSlug)}&site=${encodeURIComponent(SITE_URL)}`;
+  const shareText = `💿 ${albumName} von ${artist} – Jetzt anhören!`;
+
+  const copyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success('Link kopiert!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Kopieren fehlgeschlagen');
+    }
+  };
+
+  const shareOptions = [
+    { name: 'WhatsApp', icon: '💬', url: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + ogUrl)}` },
+    { name: 'Discord', icon: '🎮', action: copyLink, label: 'Link kopieren (für Discord)' },
+    { name: 'Telegram', icon: '✈️', url: `https://t.me/share/url?url=${encodeURIComponent(ogUrl)}&text=${encodeURIComponent(shareText)}` },
+    { name: 'X / Twitter', icon: '𝕏', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(ogUrl)}` },
+    { name: 'Facebook', icon: '📘', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ogUrl)}` },
+  ];
+
+  return (
+    <div className="relative">
+      <motion.button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        className="p-3 rounded-full glass hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title="Album teilen"
+      >
+        <Share2 size={20} />
+      </motion.button>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 5 }}
+              className="absolute right-0 bottom-full mb-2 z-50 w-56 glass rounded-xl p-2 shadow-xl border border-primary/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-3 py-2 mb-1">
+                <span className="text-sm font-medium">Album teilen</span>
+                <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+              <button onClick={copyLink} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors text-left text-sm">
+                {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                <span>{copied ? 'Kopiert!' : 'Link kopieren'}</span>
+              </button>
+              <div className="h-px bg-primary/10 my-1" />
+              {shareOptions.map((option) => (
+                <a
+                  key={option.name}
+                  href={option.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (option.action) { e.preventDefault(); option.action(e); }
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors text-sm"
+                >
+                  <span className="text-base">{option.icon}</span>
+                  <span>{option.label || option.name}</span>
+                </a>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function AlbumHero({ albumName, artist, coverUrl, trackCount, totalDuration, onPlay }: {
+function AlbumHero({ albumName, albumSlug, artist, coverUrl, trackCount, totalDuration, onPlay }: {
   albumName: string;
+  albumSlug: string;
   artist: string;
   coverUrl: string | null;
   trackCount: number;
   totalDuration: number;
   onPlay: () => void;
+
 }) {
   return (
     <section className="relative min-h-[70vh] flex items-end pb-16">
@@ -98,6 +191,7 @@ function AlbumHero({ albumName, artist, coverUrl, trackCount, totalDuration, onP
                 <Play size={24} className="ml-0.5" />
                 Jetzt abspielen
               </motion.button>
+              <AlbumShareButton albumSlug={albumSlug} albumName={albumName} artist={artist} />
             </div>
           </motion.div>
         </motion.div>
@@ -328,6 +422,7 @@ function AlbumPageContent() {
         {/* Hero */}
         <AlbumHero
           albumName={albumName}
+          albumSlug={slug || ''}
           artist={artist}
           coverUrl={coverUrl}
           trackCount={albumTracks.length}
