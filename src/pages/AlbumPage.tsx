@@ -26,7 +26,7 @@ function AlbumShareButton({ albumSlug, albumName, artist }: { albumSlug: string;
   const copyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(ogUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast.success('Link kopiert!');
       setTimeout(() => setCopied(false), 2000);
