@@ -171,46 +171,47 @@ function AlbumCard({ album, index, onSelect }: AlbumCardProps) {
   const totalDuration = album.tracks.reduce((sum, t) => sum + t.duration, 0);
   
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="glass rounded-2xl overflow-hidden card-hover cursor-pointer group"
-      onClick={() => window.location.href = `/album/${slugify(album.name)}`}
-    >
-      {/* Cover */}
-      <div className="aspect-square relative overflow-hidden">
-        {album.coverUrl ? (
-          <img 
-            src={album.coverUrl} 
-            alt={album.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
-            <Disc3 className="w-20 h-20 text-foreground/30" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <motion.div 
-          className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-primary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          whileHover={{ scale: 1.1 }}
-        >
-          <Play className="w-6 h-6 text-primary-foreground ml-0.5" />
-        </motion.div>
-      </div>
-      
-      {/* Info */}
-      <div className="p-4">
-        <h3 className="font-body font-semibold truncate group-hover:text-primary transition-colors">
-          {album.name}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {album.tracks.length} Tracks • {formatDuration(totalDuration)}
-        </p>
-      </div>
-    </motion.div>
+    <Link to={`/album/${slugify(album.name)}`}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className="glass rounded-2xl overflow-hidden card-hover cursor-pointer group"
+      >
+        {/* Cover */}
+        <div className="aspect-square relative overflow-hidden">
+          {album.coverUrl ? (
+            <img 
+              src={album.coverUrl} 
+              alt={album.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+              <Disc3 className="w-20 h-20 text-foreground/30" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <motion.div 
+            className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-primary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            whileHover={{ scale: 1.1 }}
+          >
+            <Play className="w-6 h-6 text-primary-foreground ml-0.5" />
+          </motion.div>
+        </div>
+        
+        {/* Info */}
+        <div className="p-4">
+          <h3 className="font-body font-semibold truncate group-hover:text-primary transition-colors">
+            {album.name}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {album.tracks.length} Tracks • {formatDuration(totalDuration)}
+          </p>
+        </div>
+      </motion.div>
+    </Link>
   );
 }
 
