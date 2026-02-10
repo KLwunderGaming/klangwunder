@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Play, Pause, Clock, Music2, Disc3, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTracks } from '@/hooks/useTracks';
 import { ShareButton } from '@/components/ShareButton';
@@ -176,7 +177,7 @@ function AlbumCard({ album, index, onSelect }: AlbumCardProps) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="glass rounded-2xl overflow-hidden card-hover cursor-pointer group"
-      onClick={onSelect}
+      onClick={() => window.location.href = `/album/${slugify(album.name)}`}
     >
       {/* Cover */}
       <div className="aspect-square relative overflow-hidden">
@@ -376,7 +377,7 @@ export function MusicSection() {
                   key={album.name} 
                   album={album} 
                   index={index}
-                  onSelect={() => { setSelectedAlbum(album); window.history.replaceState(null, '', `/album/${slugify(album.name)}`); }}
+                  onSelect={() => {}}
                 />
               ))}
             </div>
