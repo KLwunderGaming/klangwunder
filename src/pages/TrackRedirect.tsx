@@ -10,22 +10,25 @@ export default function TrackRedirect() {
 
   useEffect(() => {
     if (!slug) {
-      navigate('/#music', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
     const load = async () => {
       try {
         const { data: tracks } = await supabase.from('tracks').select('id, title, artist');
-        const track = tracks?.find(t => slugify(t.title) === slug);
+        // Try exact slug match first, then partial match
+        const track = tracks?.find(t => slugify(t.title) === slug)
+          || tracks?.find(t => slug.includes(slugify(t.title)))
+          || tracks?.find(t => slugify(t.title).includes(slug));
         if (track) {
           document.title = `${track.title} – ${track.artist} | Klangwunder`;
-          navigate(`/?play=${track.id}#music`, { replace: true });
+          navigate(`/?play=${track.id}`, { replace: true });
         } else {
-          navigate('/#music', { replace: true });
+          navigate('/', { replace: true });
         }
       } catch {
-        navigate('/#music', { replace: true });
+        navigate('/', { replace: true });
       } finally {
         setLoading(false);
       }
