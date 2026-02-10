@@ -12,7 +12,13 @@ interface ShareButtonProps {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SITE_URL = 'https://music.klwunder.de';
 
-function getShareUrl(trackId: string) {
+// Clean URL for display/sharing
+function getCleanShareUrl(trackId: string) {
+  return `${SITE_URL}/share/${trackId}`;
+}
+
+// Edge function URL for OG metadata (used internally for platforms that need it)
+function getOgShareUrl(trackId: string) {
   return `${SUPABASE_URL}/functions/v1/og-share?track=${trackId}&site=${encodeURIComponent(SITE_URL)}`;
 }
 
@@ -20,7 +26,8 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = getShareUrl(track.id);
+  const shareUrl = getCleanShareUrl(track.id);
+  const ogUrl = getOgShareUrl(track.id);
   const shareText = `🎵 ${track.title} von ${track.artist} – Jetzt anhören!`;
 
   const copyLink = async (e: React.MouseEvent) => {
@@ -66,7 +73,7 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
     {
       name: 'WhatsApp',
       icon: '💬',
-      url: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`,
+      url: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + ogUrl)}`,
     },
     {
       name: 'Discord',
@@ -77,17 +84,17 @@ export function ShareButton({ track, size = 16 }: ShareButtonProps) {
     {
       name: 'Telegram',
       icon: '✈️',
-      url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+      url: `https://t.me/share/url?url=${encodeURIComponent(ogUrl)}&text=${encodeURIComponent(shareText)}`,
     },
     {
       name: 'X / Twitter',
       icon: '𝕏',
-      url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+      url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(ogUrl)}`,
     },
     {
       name: 'Facebook',
       icon: '📘',
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ogUrl)}`,
     },
   ];
 

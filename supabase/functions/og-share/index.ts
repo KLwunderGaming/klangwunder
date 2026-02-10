@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   <meta property="og:image:width" content="512">
   <meta property="og:image:height" content="512">
   <meta property="og:site_name" content="Klangwunder">
-  <meta property="og:url" content="${siteUrl}">
+  <meta property="og:url" content="${siteUrl}/share/${trackId}">
   <meta property="music:duration" content="${duration}">
   ${track.album ? `<meta property="music:album" content="${track.album}">` : ""}
   <meta property="music:musician" content="${track.artist}">
