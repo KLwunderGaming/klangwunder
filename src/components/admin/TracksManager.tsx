@@ -13,7 +13,8 @@ import {
   Image as ImageIcon,
   Disc3,
   List,
-  Grid3X3
+  Grid3X3,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
