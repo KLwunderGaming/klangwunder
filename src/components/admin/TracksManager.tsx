@@ -630,10 +630,11 @@ interface TrackRowProps {
   index: number;
   onEdit: () => void;
   onDelete: () => void;
+  onDownload: () => void;
   formatDuration: (s: number) => string;
 }
 
-function TrackRow({ track, index, onEdit, onDelete, formatDuration }: TrackRowProps) {
+function TrackRow({ track, index, onEdit, onDelete, onDownload, formatDuration }: TrackRowProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
