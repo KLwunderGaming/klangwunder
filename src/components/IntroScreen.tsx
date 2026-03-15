@@ -261,18 +261,28 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
   const [phase, setPhase] = useState<'title' | 'transition' | 'logo'>('title');
   const [isVisible, setIsVisible] = useState(true);
   const [showButton, setShowButton] = useState(false);
+  const hasExitedRef = useRef(false);
 
   const handleTitleComplete = useCallback(() => {
-    // Längere Übergänge für professionelleres Gefühl
     setTimeout(() => setPhase('transition'), 500);
     setTimeout(() => setPhase('logo'), 1500);
     setTimeout(() => setShowButton(true), 2500);
   }, []);
 
   const handleEnter = useCallback(() => {
+    if (hasExitedRef.current) return;
+    hasExitedRef.current = true;
     setIsVisible(false);
     setTimeout(onComplete, 800);
   }, [onComplete]);
+
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      handleEnter();
+    }, 12000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [handleEnter]);
 
   return (
     <AnimatePresence>
