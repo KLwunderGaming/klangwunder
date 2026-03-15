@@ -678,11 +678,14 @@ interface TrackRowProps {
   index: number;
   onEdit: () => void;
   onDelete: () => void;
-  onDownload: () => void;
+  onDownloadAudio: () => void;
+  onDownloadCover: () => void;
   formatDuration: (s: number) => string;
 }
 
-function TrackRow({ track, index, onEdit, onDelete, onDownload, formatDuration }: TrackRowProps) {
+function TrackRow({ track, index, onEdit, onDelete, onDownloadAudio, onDownloadCover, formatDuration }: TrackRowProps) {
+  const hasDownloads = track.audio_url || track.cover_url;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -722,16 +725,33 @@ function TrackRow({ track, index, onEdit, onDelete, onDownload, formatDuration }
 
       {/* Actions */}
       <div className="flex items-center gap-1">
-        {track.audio_url && (
-          <motion.button
-            onClick={onDownload}
-            className="p-2 rounded-lg hover:bg-accent/20 text-muted-foreground hover:text-accent-foreground transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            title="Herunterladen"
-          >
-            <Download size={16} />
-          </motion.button>
+        {hasDownloads && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                className="p-2 rounded-lg hover:bg-accent/20 text-muted-foreground hover:text-accent-foreground transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                title="Herunterladen"
+              >
+                <Download size={16} />
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              {track.audio_url && (
+                <DropdownMenuItem onClick={onDownloadAudio} className="cursor-pointer gap-2">
+                  <Music size={14} />
+                  Musik herunterladen
+                </DropdownMenuItem>
+              )}
+              {track.cover_url && (
+                <DropdownMenuItem onClick={onDownloadCover} className="cursor-pointer gap-2">
+                  <ImageIcon size={14} />
+                  Cover herunterladen
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         <motion.button
           onClick={onEdit}
