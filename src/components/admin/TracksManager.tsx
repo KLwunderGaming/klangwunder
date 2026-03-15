@@ -289,7 +289,25 @@ export function TracksManager() {
     }
   };
 
-  const formatDuration = (seconds: number) => {
+  const downloadTrack = async (track: Track) => {
+    if (!track.audio_url) return;
+    try {
+      const response = await fetch(track.audio_url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Download fehlgeschlagen');
+    }
+  };
+
+
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
