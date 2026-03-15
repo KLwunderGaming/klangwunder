@@ -456,6 +456,7 @@ export function TracksManager() {
               index={index}
               onEdit={() => openEditModal(track)}
               onDelete={() => deleteTrack(track)}
+              onDownload={() => downloadTrack(track)}
               formatDuration={formatDuration}
             />
           ))}
