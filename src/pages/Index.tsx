@@ -66,7 +66,13 @@ function MainContent() {
 const Index = () => {
   const [searchParams] = useSearchParams();
   const hasPlayParam = searchParams.has('play');
-  const [showIntro, setShowIntro] = useState(!hasPlayParam);
+  const introSeen = sessionStorage.getItem('intro_seen');
+  const [showIntro, setShowIntro] = useState(!hasPlayParam && !introSeen);
+
+  const handleIntroComplete = () => {
+    sessionStorage.setItem('intro_seen', 'true');
+    setShowIntro(false);
+  };
 
   return (
     <AudioProvider>
