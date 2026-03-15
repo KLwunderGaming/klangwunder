@@ -674,6 +674,17 @@ function TrackRow({ track, index, onEdit, onDelete, onDownload, formatDuration }
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {track.audio_url && (
+          <motion.button
+            onClick={onDownload}
+            className="p-2 rounded-lg hover:bg-accent/20 text-muted-foreground hover:text-accent-foreground transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Herunterladen"
+          >
+            <Download size={16} />
+          </motion.button>
+        )}
         <motion.button
           onClick={onEdit}
           className="p-2 rounded-lg hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors"
