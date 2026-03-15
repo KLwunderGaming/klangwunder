@@ -78,7 +78,7 @@ const Index = () => {
     <AudioProvider>
       <div className="min-h-screen bg-background">
         {showIntro ? (
-          <IntroScreen onComplete={() => setShowIntro(false)} />
+          <IntroScreen onComplete={handleIntroComplete} />
         ) : (
           <MainContent />
         )}
