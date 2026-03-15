@@ -23,7 +23,8 @@ function PlaylistCard({ playlist, index, onPlay }: PlaylistCardProps) {
       setTrackCount(tracks.length);
     };
     loadTracks();
-  }, [playlist.id, getPlaylistTracks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playlist.id]);
 
   const handlePlay = () => {
     if (playlistTracks.length > 0) {
