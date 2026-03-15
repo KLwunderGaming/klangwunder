@@ -13,7 +13,8 @@ import {
   Image as ImageIcon,
   Disc3,
   List,
-  Grid3X3
+  Grid3X3,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -288,6 +289,24 @@ export function TracksManager() {
     }
   };
 
+  const downloadTrack = async (track: Track) => {
+    if (!track.audio_url) return;
+    try {
+      const response = await fetch(track.audio_url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Download fehlgeschlagen');
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -422,6 +441,7 @@ export function TracksManager() {
               index={index}
               onEdit={() => openEditModal(track)}
               onDelete={() => deleteTrack(track)}
+              onDownload={() => downloadTrack(track)}
               formatDuration={formatDuration}
             />
           ))}
@@ -436,6 +456,7 @@ export function TracksManager() {
               index={index}
               onEdit={() => openEditModal(track)}
               onDelete={() => deleteTrack(track)}
+              onDownload={() => downloadTrack(track)}
               formatDuration={formatDuration}
             />
           ))}
@@ -629,10 +650,11 @@ interface TrackRowProps {
   index: number;
   onEdit: () => void;
   onDelete: () => void;
+  onDownload: () => void;
   formatDuration: (s: number) => string;
 }
 
-function TrackRow({ track, index, onEdit, onDelete, formatDuration }: TrackRowProps) {
+function TrackRow({ track, index, onEdit, onDelete, onDownload, formatDuration }: TrackRowProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -672,6 +694,17 @@ function TrackRow({ track, index, onEdit, onDelete, formatDuration }: TrackRowPr
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {track.audio_url && (
+          <motion.button
+            onClick={onDownload}
+            className="p-2 rounded-lg hover:bg-accent/20 text-muted-foreground hover:text-accent-foreground transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Herunterladen"
+          >
+            <Download size={16} />
+          </motion.button>
+        )}
         <motion.button
           onClick={onEdit}
           className="p-2 rounded-lg hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors"
