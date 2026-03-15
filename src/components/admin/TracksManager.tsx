@@ -14,9 +14,16 @@ import {
   Disc3,
   List,
   Grid3X3,
-  Download
+  Download,
+  ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Track {
   id: string;
