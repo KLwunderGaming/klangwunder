@@ -292,18 +292,29 @@ export function TracksManager() {
   const downloadTrack = async (track: Track) => {
     if (!track.audio_url) return;
     try {
-      const response = await fetch(track.audio_url);
+      toast.info('Download wird gestartet...');
+      const response = await fetch(track.audio_url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Netzwerkfehler');
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${track.title}.mp3`;
+      a.style.display = 'none';
+      a.href = blobUrl;
+      const ext = track.audio_url.split('.').pop()?.split('?')[0] || 'mp3';
+      a.download = `${track.title}.${ext}`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Download fehlgeschlagen');
+      // Cleanup after a short delay
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+      toast.success('Download gestartet');
+    } catch (err) {
+      console.error('Download error:', err);
+      // Fallback: open in new tab
+      window.open(track.audio_url, '_blank');
+      toast.info('Datei wird im neuen Tab geöffnet');
     }
   };
 
