@@ -296,22 +296,19 @@ export function TracksManager() {
     }
   };
 
-  const downloadTrack = async (track: Track) => {
-    if (!track.audio_url) return;
+  const downloadFile = async (url: string, filename: string) => {
     try {
       toast.info('Download wird gestartet...');
-      const response = await fetch(track.audio_url, { mode: 'cors' });
+      const response = await fetch(url, { mode: 'cors' });
       if (!response.ok) throw new Error('Netzwerkfehler');
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = blobUrl;
-      const ext = track.audio_url.split('.').pop()?.split('?')[0] || 'mp3';
-      a.download = `${track.title}.${ext}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
-      // Cleanup after a short delay
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
@@ -319,10 +316,21 @@ export function TracksManager() {
       toast.success('Download gestartet');
     } catch (err) {
       console.error('Download error:', err);
-      // Fallback: open in new tab
-      window.open(track.audio_url, '_blank');
+      window.open(url, '_blank');
       toast.info('Datei wird im neuen Tab geöffnet');
     }
+  };
+
+  const downloadTrackAudio = (track: Track) => {
+    if (!track.audio_url) return;
+    const ext = track.audio_url.split('.').pop()?.split('?')[0] || 'mp3';
+    downloadFile(track.audio_url, `${track.title}.${ext}`);
+  };
+
+  const downloadTrackCover = (track: Track) => {
+    if (!track.cover_url) return;
+    const ext = track.cover_url.split('.').pop()?.split('?')[0] || 'jpg';
+    downloadFile(track.cover_url, `${track.title} - Cover.${ext}`);
   };
 
   const formatDuration = (seconds: number) => {
